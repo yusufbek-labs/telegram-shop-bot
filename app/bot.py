@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 
 from aiogram import Bot, Dispatcher
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import BotCommand, BotCommandScopeChat, ErrorEvent
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -24,8 +25,17 @@ def build_dispatcher(settings: Settings, sessionmaker: async_sessionmaker[AsyncS
 
     @dp.errors()
     async def on_error(event: ErrorEvent, lang: str = "en") -> bool:
-        log.exception("unhandled error while processing update", exc_info=event.exception)
         update = event.update
+        # Buttons pressed while the bot was offline arrive after Telegram's answer window;
+        # there is nothing to show the user, so skip them without a traceback.
+        if (
+            update.callback_query
+            and isinstance(event.exception, TelegramBadRequest)
+            and "query is too old" in str(event.exception)
+        ):
+            log.info("skipped expired button press from user %s", update.callback_query.from_user.id)
+            return True
+        log.exception("unhandled error while processing update", exc_info=event.exception)
         try:
             if update.message:
                 await update.message.answer(t(lang, "error_generic"))
