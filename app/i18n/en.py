@@ -30,6 +30,7 @@ TEXTS = {
     "catalog_empty": "The catalog is empty for now. Please check back soon.",
     "category_empty": "No products in this category yet.",
     "category_header": "<b>{category}</b>",
+    "category_footer": "That is all in <b>{category}</b> ({count} shown).",
     "product_card": "<b>{name}</b>\n{description}\n\n💰 {price}",
     "added_to_cart": "Added to cart: {name}",
     "product_unavailable": "Sorry, this product is no longer available.",

@@ -1,0 +1,605 @@
+{
+  "shop_name": "Maple & Pine Goods",
+  "date": "2026-11-17",
+  "users": {
+    "customer": {
+      "id": 2000,
+      "name": "Alex Morgan"
+    },
+    "admin": {
+      "id": 1000,
+      "name": "Sam Admin"
+    }
+  },
+  "events": [
+    {
+      "type": "user_text",
+      "ts": "22:23:50",
+      "chat": 2000,
+      "text": "/start"
+    },
+    {
+      "type": "send",
+      "ts": "22:23:51",
+      "chat": 2000,
+      "message_id": 100,
+      "text": "Welcome to <b>Maple & Pine Goods</b>!\nBrowse the catalog, fill your cart and check out in a few taps.\n\nMain menu:",
+      "parse_mode": "HTML",
+      "keyboard": [
+        [
+          "🛍 Catalog",
+          "🛒 Cart"
+        ],
+        [
+          "📦 My orders",
+          "🌐 Language"
+        ],
+        [
+          "❓ Help"
+        ]
+      ],
+      "reply_keyboard": null,
+      "reply_keyboard_removed": false
+    },
+    {
+      "type": "user_text",
+      "ts": "22:24:03",
+      "chat": 2000,
+      "text": "/catalog"
+    },
+    {
+      "type": "send",
+      "ts": "22:24:04",
+      "chat": 2000,
+      "message_id": 101,
+      "text": "<b>Catalog</b>\nChoose a category:",
+      "parse_mode": "HTML",
+      "keyboard": [
+        [
+          "Tea",
+          "Candles"
+        ],
+        [
+          "Home and Gifts"
+        ],
+        [
+          "🏠 Menu"
+        ]
+      ],
+      "reply_keyboard": null,
+      "reply_keyboard_removed": false
+    },
+    {
+      "type": "snapshot",
+      "ts": "22:24:06",
+      "chat": 2000,
+      "name": "menu-catalog",
+      "last": 4
+    },
+    {
+      "type": "user_tap",
+      "ts": "22:24:15",
+      "chat": 2000,
+      "label": "Tea",
+      "message_id": 101
+    },
+    {
+      "type": "send",
+      "ts": "22:24:17",
+      "chat": 2000,
+      "message_id": 102,
+      "text": "<b>Tea</b>",
+      "parse_mode": "HTML",
+      "keyboard": null,
+      "reply_keyboard": null,
+      "reply_keyboard_removed": false
+    },
+    {
+      "type": "send",
+      "ts": "22:24:18",
+      "chat": 2000,
+      "message_id": 103,
+      "text": "<b>Alpine Green Tea, 100 g</b>\nLight, grassy green tea with a clean finish. Loose leaf.\n\n💰 $12.50",
+      "parse_mode": "HTML",
+      "keyboard": [
+        [
+          "➕ Add to cart"
+        ]
+      ],
+      "reply_keyboard": null,
+      "reply_keyboard_removed": false
+    },
+    {
+      "type": "send",
+      "ts": "22:24:19",
+      "chat": 2000,
+      "message_id": 104,
+      "text": "<b>Smoked Black Tea, 100 g</b>\nDark, malty black tea with a gentle campfire note.\n\n💰 $14.00",
+      "parse_mode": "HTML",
+      "keyboard": [
+        [
+          "➕ Add to cart"
+        ]
+      ],
+      "reply_keyboard": null,
+      "reply_keyboard_removed": false
+    },
+    {
+      "type": "send",
+      "ts": "22:24:20",
+      "chat": 2000,
+      "message_id": 105,
+      "text": "<b>Mint and Lemon Blend, 80 g</b>\nCaffeine-free herbal blend, great iced in summer.\n\n💰 $11.00",
+      "parse_mode": "HTML",
+      "keyboard": [
+        [
+          "➕ Add to cart"
+        ]
+      ],
+      "reply_keyboard": null,
+      "reply_keyboard_removed": false
+    },
+    {
+      "type": "send",
+      "ts": "22:24:21",
+      "chat": 2000,
+      "message_id": 106,
+      "text": "That is all in <b>Tea</b> (3 shown).",
+      "parse_mode": "HTML",
+      "keyboard": [
+        [
+          "⬅️ Back",
+          "🛒 Cart"
+        ]
+      ],
+      "reply_keyboard": null,
+      "reply_keyboard_removed": false
+    },
+    {
+      "type": "user_tap",
+      "ts": "22:24:30",
+      "chat": 2000,
+      "label": "➕ Add to cart",
+      "message_id": 103
+    },
+    {
+      "type": "toast",
+      "ts": "22:24:31",
+      "chat": 2000,
+      "text": "Added to cart: Alpine Green Tea, 100 g"
+    },
+    {
+      "type": "user_tap",
+      "ts": "22:24:40",
+      "chat": 2000,
+      "label": "➕ Add to cart",
+      "message_id": 103
+    },
+    {
+      "type": "toast",
+      "ts": "22:24:41",
+      "chat": 2000,
+      "text": "Added to cart: Alpine Green Tea, 100 g"
+    },
+    {
+      "type": "user_tap",
+      "ts": "22:24:50",
+      "chat": 2000,
+      "label": "⬅️ Back",
+      "message_id": 106
+    },
+    {
+      "type": "edit",
+      "ts": "22:24:51",
+      "chat": 2000,
+      "message_id": 106,
+      "text": "<b>Catalog</b>\nChoose a category:",
+      "parse_mode": "HTML",
+      "keyboard": [
+        [
+          "Tea",
+          "Candles"
+        ],
+        [
+          "Home and Gifts"
+        ],
+        [
+          "🏠 Menu"
+        ]
+      ]
+    },
+    {
+      "type": "user_tap",
+      "ts": "22:25:01",
+      "chat": 2000,
+      "label": "Candles",
+      "message_id": 106
+    },
+    {
+      "type": "send",
+      "ts": "22:25:03",
+      "chat": 2000,
+      "message_id": 107,
+      "text": "<b>Candles</b>",
+      "parse_mode": "HTML",
+      "keyboard": null,
+      "reply_keyboard": null,
+      "reply_keyboard_removed": false
+    },
+    {
+      "type": "photo",
+      "ts": "22:25:04",
+      "chat": 2000,
+      "message_id": 108,
+      "text": "<b>Pine Forest Candle</b>\nHand-poured soy wax candle, 40 hours burn time.\n\n💰 $19.00",
+      "parse_mode": "HTML",
+      "keyboard": [
+        [
+          "➕ Add to cart"
+        ]
+      ],
+      "reply_keyboard": null,
+      "reply_keyboard_removed": false,
+      "photo": "https://placehold.co/600x400/png?text=Pine+Forest+Candle"
+    },
+    {
+      "type": "photo",
+      "ts": "22:25:05",
+      "chat": 2000,
+      "message_id": 109,
+      "text": "<b>Maple Morning Candle</b>\nWarm maple and vanilla scent in a reusable glass jar.\n\n💰 $21.00",
+      "parse_mode": "HTML",
+      "keyboard": [
+        [
+          "➕ Add to cart"
+        ]
+      ],
+      "reply_keyboard": null,
+      "reply_keyboard_removed": false,
+      "photo": "https://placehold.co/600x400/png?text=Maple+Morning+Candle"
+    },
+    {
+      "type": "send",
+      "ts": "22:25:06",
+      "chat": 2000,
+      "message_id": 110,
+      "text": "<b>Travel Tin Candle</b>\nPocket-size 8-hour candle in a tin, linen scent.\n\n💰 $9.00",
+      "parse_mode": "HTML",
+      "keyboard": [
+        [
+          "➕ Add to cart"
+        ]
+      ],
+      "reply_keyboard": null,
+      "reply_keyboard_removed": false
+    },
+    {
+      "type": "send",
+      "ts": "22:25:07",
+      "chat": 2000,
+      "message_id": 111,
+      "text": "That is all in <b>Candles</b> (3 shown).",
+      "parse_mode": "HTML",
+      "keyboard": [
+        [
+          "⬅️ Back",
+          "🛒 Cart"
+        ]
+      ],
+      "reply_keyboard": null,
+      "reply_keyboard_removed": false
+    },
+    {
+      "type": "snapshot",
+      "ts": "22:25:09",
+      "chat": 2000,
+      "name": "product-cards",
+      "last": 5
+    },
+    {
+      "type": "user_tap",
+      "ts": "22:25:18",
+      "chat": 2000,
+      "label": "➕ Add to cart",
+      "message_id": 108
+    },
+    {
+      "type": "toast",
+      "ts": "22:25:19",
+      "chat": 2000,
+      "text": "Added to cart: Pine Forest Candle"
+    },
+    {
+      "type": "user_tap",
+      "ts": "22:25:28",
+      "chat": 2000,
+      "label": "🛒 Cart",
+      "message_id": 111
+    },
+    {
+      "type": "edit",
+      "ts": "22:25:29",
+      "chat": 2000,
+      "message_id": 111,
+      "text": "<b>Your cart</b>\n\nAlpine Green Tea, 100 g × 2 = $25.00\nPine Forest Candle × 1 = $19.00\n\n<b>Total: $44.00</b>",
+      "parse_mode": "HTML",
+      "keyboard": [
+        [
+          "➖",
+          "Alpine Green T · 2",
+          "➕",
+          "✖️"
+        ],
+        [
+          "➖",
+          "Pine Forest Ca · 1",
+          "➕",
+          "✖️"
+        ],
+        [
+          "✅ Checkout",
+          "🗑 Clear cart"
+        ],
+        [
+          "🏠 Menu"
+        ]
+      ]
+    },
+    {
+      "type": "snapshot",
+      "ts": "22:25:32",
+      "chat": 2000,
+      "name": "cart",
+      "last": 1
+    },
+    {
+      "type": "user_tap",
+      "ts": "22:25:41",
+      "chat": 2000,
+      "label": "✅ Checkout",
+      "message_id": 111
+    },
+    {
+      "type": "send",
+      "ts": "22:25:43",
+      "chat": 2000,
+      "message_id": 112,
+      "text": "Checkout (1/4)\nWhat is your name?",
+      "parse_mode": "HTML",
+      "keyboard": null,
+      "reply_keyboard": null,
+      "reply_keyboard_removed": false
+    },
+    {
+      "type": "user_text",
+      "ts": "22:25:55",
+      "chat": 2000,
+      "text": "Alex Morgan"
+    },
+    {
+      "type": "send",
+      "ts": "22:25:56",
+      "chat": 2000,
+      "message_id": 113,
+      "text": "Checkout (2/4)\nSend your phone number: type it or use the button.",
+      "parse_mode": "HTML",
+      "keyboard": null,
+      "reply_keyboard": [
+        [
+          "📱 Share my number"
+        ]
+      ],
+      "reply_keyboard_removed": false
+    },
+    {
+      "type": "snapshot",
+      "ts": "22:25:58",
+      "chat": 2000,
+      "name": "checkout",
+      "last": 3
+    },
+    {
+      "type": "user_text",
+      "ts": "22:26:10",
+      "chat": 2000,
+      "text": "+1 555 0100"
+    },
+    {
+      "type": "send",
+      "ts": "22:26:11",
+      "chat": 2000,
+      "message_id": 114,
+      "text": "Checkout (3/4)\nEnter the delivery address.",
+      "parse_mode": "HTML",
+      "keyboard": null,
+      "reply_keyboard": null,
+      "reply_keyboard_removed": true
+    },
+    {
+      "type": "user_text",
+      "ts": "22:26:23",
+      "chat": 2000,
+      "text": "42 Birch Lane, Springfield"
+    },
+    {
+      "type": "send",
+      "ts": "22:26:24",
+      "chat": 2000,
+      "message_id": 115,
+      "text": "Checkout (4/4)\nChoose a payment method:",
+      "parse_mode": "HTML",
+      "keyboard": [
+        [
+          "💵 Cash on delivery"
+        ],
+        [
+          "💳 Card on delivery"
+        ]
+      ],
+      "reply_keyboard": null,
+      "reply_keyboard_removed": false
+    },
+    {
+      "type": "user_tap",
+      "ts": "22:26:33",
+      "chat": 2000,
+      "label": "💵 Cash on delivery",
+      "message_id": 115
+    },
+    {
+      "type": "edit",
+      "ts": "22:26:34",
+      "chat": 2000,
+      "message_id": 115,
+      "text": "<b>Please confirm your order</b>\n\nAlpine Green Tea, 100 g × 2 = $25.00\nPine Forest Candle × 1 = $19.00\n\n<b>Total: $44.00</b>\n\nName: Alex Morgan\nPhone: +15550100\nAddress: 42 Birch Lane, Springfield\nPayment: 💵 Cash on delivery",
+      "parse_mode": "HTML",
+      "keyboard": [
+        [
+          "✅ Confirm",
+          "✖️ Cancel"
+        ]
+      ]
+    },
+    {
+      "type": "snapshot",
+      "ts": "22:26:37",
+      "chat": 2000,
+      "name": "order-summary",
+      "last": 5
+    },
+    {
+      "type": "user_tap",
+      "ts": "22:26:46",
+      "chat": 2000,
+      "label": "✅ Confirm",
+      "message_id": 115
+    },
+    {
+      "type": "edit",
+      "ts": "22:26:47",
+      "chat": 2000,
+      "message_id": 115,
+      "text": "✅ Thank you! Order <b>#1</b> is placed. Total: $44.00.\nWe will update you here when the status changes.",
+      "parse_mode": "HTML",
+      "keyboard": [
+        [
+          "🛍 Catalog",
+          "🛒 Cart"
+        ],
+        [
+          "📦 My orders",
+          "🌐 Language"
+        ],
+        [
+          "❓ Help"
+        ]
+      ]
+    },
+    {
+      "type": "send",
+      "ts": "22:26:49",
+      "chat": 1000,
+      "message_id": 116,
+      "text": "🔔 <b>New order #1</b>\n\nCreated: 2026-11-17 22:23 UTC\nCustomer: Alex Morgan (+15550100)\nAddress: 42 Birch Lane, Springfield\nPayment: 💵 Cash on delivery\n\n- Alpine Green Tea, 100 g × 2 = $25.00\n- Pine Forest Candle × 1 = $19.00\n\n<b>Total: $44.00</b>",
+      "parse_mode": "HTML",
+      "keyboard": [
+        [
+          "✅ Confirmed",
+          "❌ Cancelled"
+        ]
+      ],
+      "reply_keyboard": null,
+      "reply_keyboard_removed": false
+    },
+    {
+      "type": "snapshot",
+      "ts": "22:26:51",
+      "chat": 1000,
+      "name": "admin-order",
+      "last": 1
+    },
+    {
+      "type": "user_tap",
+      "ts": "22:27:00",
+      "chat": 1000,
+      "label": "✅ Confirmed",
+      "message_id": 116
+    },
+    {
+      "type": "toast",
+      "ts": "22:27:01",
+      "chat": 1000,
+      "text": "Order #1 is now ✅ Confirmed."
+    },
+    {
+      "type": "edit",
+      "ts": "22:27:02",
+      "chat": 1000,
+      "message_id": 116,
+      "text": "<b>Order #1</b> · ✅ Confirmed\nCreated: 2026-11-17 22:23 UTC\nCustomer: Alex Morgan (+15550100)\nAddress: 42 Birch Lane, Springfield\nPayment: 💵 Cash on delivery\n\n- Alpine Green Tea, 100 g × 2 = $25.00\n- Pine Forest Candle × 1 = $19.00\n\n<b>Total: $44.00</b>",
+      "parse_mode": "HTML",
+      "keyboard": [
+        [
+          "🚚 Shipped",
+          "❌ Cancelled"
+        ]
+      ]
+    },
+    {
+      "type": "send",
+      "ts": "22:27:03",
+      "chat": 2000,
+      "message_id": 117,
+      "text": "Order <b>#1</b>: status is now <b>✅ Confirmed</b>.",
+      "parse_mode": "HTML",
+      "keyboard": null,
+      "reply_keyboard": null,
+      "reply_keyboard_removed": false
+    },
+    {
+      "type": "user_tap",
+      "ts": "22:27:12",
+      "chat": 1000,
+      "label": "🚚 Shipped",
+      "message_id": 116
+    },
+    {
+      "type": "toast",
+      "ts": "22:27:13",
+      "chat": 1000,
+      "text": "Order #1 is now 🚚 Shipped."
+    },
+    {
+      "type": "edit",
+      "ts": "22:27:14",
+      "chat": 1000,
+      "message_id": 116,
+      "text": "<b>Order #1</b> · 🚚 Shipped\nCreated: 2026-11-17 22:23 UTC\nCustomer: Alex Morgan (+15550100)\nAddress: 42 Birch Lane, Springfield\nPayment: 💵 Cash on delivery\n\n- Alpine Green Tea, 100 g × 2 = $25.00\n- Pine Forest Candle × 1 = $19.00\n\n<b>Total: $44.00</b>",
+      "parse_mode": "HTML",
+      "keyboard": [
+        [
+          "📬 Delivered",
+          "❌ Cancelled"
+        ]
+      ]
+    },
+    {
+      "type": "send",
+      "ts": "22:27:15",
+      "chat": 2000,
+      "message_id": 118,
+      "text": "Order <b>#1</b>: status is now <b>🚚 Shipped</b>.",
+      "parse_mode": "HTML",
+      "keyboard": null,
+      "reply_keyboard": null,
+      "reply_keyboard_removed": false
+    },
+    {
+      "type": "snapshot",
+      "ts": "22:27:17",
+      "chat": 2000,
+      "name": "status-update",
+      "last": 3
+    }
+  ]
+}

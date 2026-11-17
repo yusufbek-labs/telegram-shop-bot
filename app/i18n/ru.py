@@ -30,6 +30,7 @@ TEXTS = {
     "catalog_empty": "Каталог пока пуст. Загляните позже.",
     "category_empty": "В этой категории пока нет товаров.",
     "category_header": "<b>{category}</b>",
+    "category_footer": "Это всё в категории <b>{category}</b> (показано: {count}).",
     "product_card": "<b>{name}</b>\n{description}\n\n💰 {price}",
     "added_to_cart": "Добавлено в корзину: {name}",
     "product_unavailable": "К сожалению, этот товар больше недоступен.",

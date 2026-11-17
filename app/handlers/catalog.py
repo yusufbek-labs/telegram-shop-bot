@@ -66,7 +66,10 @@ async def open_category(cb: CallbackQuery, callback_data: Cat, lang: str, sessio
             except TelegramBadRequest:
                 log.warning("bad image url for product %s, falling back to text", p.id)
         await target.answer(text, reply_markup=markup)
-    await target.answer("...", reply_markup=kb.after_products(lang))
+    await target.answer(
+        t(lang, "category_footer", category=category.name(lang), count=len(products)),
+        reply_markup=kb.after_products(lang),
+    )
 
 
 @router.callback_query(AddToCart.filter())

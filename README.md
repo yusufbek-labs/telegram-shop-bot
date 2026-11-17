@@ -6,7 +6,7 @@ A ready-to-run Telegram shop: customers browse a catalog, fill a cart and check 
 
 ![Test results](docs/test-results.png)
 
-*Real output of `python -m pytest -q` (194 tests, no network, no bot token needed). Regenerate with `python -m scripts.make_test_image`.*
+*Real output of `python -m pytest -q` (198 tests, no network, no bot token needed). Regenerate with `python -m scripts.make_test_image`.*
 
 ---
 
@@ -82,7 +82,21 @@ To replace the demo catalog: edit `scripts/seed.py` and run `python -m scripts.s
 
 ## Live demo screenshots
 
-*Chat screenshots will be added here after a run with a real bot token.* They are intentionally not mocked up: everything on this page that is shown as evidence (the test results above) is real output.
+![Main menu and catalog](docs/screenshots/01-menu-catalog.png)
+
+![Product cards in a category](docs/screenshots/02-product-cards.png)
+
+![Cart](docs/screenshots/03-cart.png)
+
+![Checkout: the phone step with the reply keyboard docked](docs/screenshots/04-checkout.png)
+
+![Order summary before confirming](docs/screenshots/05-order-summary.png)
+
+![New-order notification with status buttons (shop owner)](docs/screenshots/06-admin-order.png)
+
+![Order confirmation and status updates (customer)](docs/screenshots/07-status-update.png)
+
+*Conversation rendered from the bot's real responses, captured by running the actual handlers with a recording Telegram session (`python -m scripts.capture_demo && python -m scripts.render_demo --screenshots`). Styled like a chat; not a screenshot of the Telegram app. Each image is the chat state at one moment, with message edits applied in place; product photos are placeholders. A run against the live Telegram service has not been done yet.*
 
 ---
 
@@ -112,7 +126,7 @@ app/
 scripts/seed.py          demo catalog (idempotent)
 scripts/make_test_image.py  renders docs/test-results.png from real pytest output
 run.py                   one-command bootstrap
-tests/                   194 tests
+tests/                   198 tests
 ```
 
 Design notes:
@@ -136,7 +150,7 @@ pip install -r requirements-dev.txt        # or use the .venv created by run.py
 python -m pytest -q
 ```
 
-194 tests, about 3 seconds, no network and no real token:
+198 tests, about 3 seconds, no network and no real token:
 
 - **Services**: cart math and quantity limits, order totals and price snapshots, the full status transition matrix, permission checks, broadcast rate limiter (fake clock), flood-control and blocked-user handling, stats windows and timezone, validation, money, config parsing, seed.
 - **i18n**: both languages have identical keys and placeholders, every status and payment method has a label, language detection.

@@ -137,6 +137,15 @@ async def test_unknown_input_never_crashes(harness):
     assert all(p.is_active for p in await _db(harness, select(Product)))
 
 
+async def test_category_ends_with_a_real_navigation_message(harness):
+    await harness.press(CUSTOMER_ID, Cat(id=1))
+    last = harness.sent_to(CUSTOMER_ID)[-1]
+    assert "Tea" in last.text and "3 shown" in last.text and last.text.strip(". …") != ""
+    assert [b.text for b in last.reply_markup.inline_keyboard[0]] == [EN["btn_back"], EN["btn_cart"]]
+    await harness.press(3000, Cat(id=1), lang="ru")
+    assert "показано: 3" in harness.sent_to(3000)[-1].text
+
+
 async def test_admin_toggle_hides_product_from_catalog(harness):
     await harness.say(ADMIN_ID, "/products")
     assert "Products" in harness.texts_to(ADMIN_ID)[-1]
