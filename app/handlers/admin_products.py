@@ -28,7 +28,6 @@ router.callback_query.filter(IsAdmin())
 TEXT = F.text & ~F.text.startswith("/")
 
 
-# ---------- list + toggle ----------
 async def _render_products(event, lang: str, session: AsyncSession, settings: Settings) -> None:
     products = await CatalogRepo(session).products(only_active=False)
     if not products:
@@ -56,7 +55,6 @@ async def toggle_product(cb: CallbackQuery, callback_data: ProductToggle, lang: 
     await _render_products(cb, lang, session, settings)
 
 
-# ---------- add product ----------
 @router.message(Command("add_product"))
 async def cmd_add_product(message: Message, state: FSMContext, lang: str, session: AsyncSession) -> None:
     await state.clear()
@@ -144,7 +142,6 @@ async def add_confirm(cb: CallbackQuery, callback_data: Confirm, state: FSMConte
     await show(cb, t(lang, "product_saved", id=product.id))
 
 
-# ---------- edit product ----------
 @router.message(Command("edit_product"))
 async def cmd_edit_product(message: Message, state: FSMContext, lang: str, session: AsyncSession) -> None:
     await state.clear()

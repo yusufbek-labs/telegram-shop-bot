@@ -49,7 +49,7 @@ async def test_start_detects_russian_and_stores_language(harness):
     user = (await _db(harness, select(User).where(User.id == CUSTOMER_ID)))[0]
     assert user.language == "ru"
     markup = harness.sent_to(CUSTOMER_ID)[0].reply_markup
-    assert len(markup.inline_keyboard) >= 2  # inline main menu
+    assert len(markup.inline_keyboard) >= 2
 
 
 async def test_start_defaults_to_english_and_language_switch(harness):
@@ -115,7 +115,7 @@ async def test_cart_controls_and_empty_checkout_guard(harness):
 async def test_checkout_validation_keeps_state_and_unknown_input_is_handled(harness):
     await harness.press(CUSTOMER_ID, AddToCart(product_id=1))
     await harness.press(CUSTOMER_ID, CartAct(action="checkout"))
-    await harness.say(CUSTOMER_ID, "x")  # too short
+    await harness.say(CUSTOMER_ID, "x")
     assert harness.texts_to(CUSTOMER_ID)[-1] == EN["invalid_name"]
     await harness.say(CUSTOMER_ID, "Bob")
     await harness.say(CUSTOMER_ID, "not-a-phone")
@@ -130,9 +130,9 @@ async def test_unknown_input_never_crashes(harness):
     assert harness.texts_to(CUSTOMER_ID)[-1] == EN["unknown_input"]
     await harness.say(CUSTOMER_ID, "/nonsense")
     assert harness.texts_to(CUSTOMER_ID)[-1] == EN["unknown_command"]
-    await harness.say(CUSTOMER_ID, "/stats")  # admin command, customer user
+    await harness.say(CUSTOMER_ID, "/stats")
     assert harness.texts_to(CUSTOMER_ID)[-1] == EN["no_permission"]
-    await harness.press(CUSTOMER_ID, ProductToggle(product_id=1))  # admin button, customer user
+    await harness.press(CUSTOMER_ID, ProductToggle(product_id=1))
     assert EN["stale_button"] in harness.alerts()
     assert all(p.is_active for p in await _db(harness, select(Product)))
 

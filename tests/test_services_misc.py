@@ -15,7 +15,6 @@ from app.services.validation import clean_address, clean_name, clean_phone, clea
 from scripts.seed import seed
 
 
-# ---------- rate limiter ----------
 class FakeClock:
     def __init__(self):
         self.now = 100.0
@@ -99,7 +98,6 @@ async def test_broadcast_gives_up_after_max_retries():
     assert (result.sent, result.failed) == (1, 1)
 
 
-# ---------- stats ----------
 def test_period_starts_respects_timezone():
     now = datetime(2026, 3, 10, 23, 30)  # 23:30 UTC = 00:30 next day in Berlin (UTC+1)
     today, week = period_starts(now, "Europe/Berlin")
@@ -126,7 +124,6 @@ async def test_stats_today_week_and_cancelled_excluded(sessionmaker):
     assert (stats.week_orders, stats.week_revenue_cents) == (3, 3300)  # the 8-day-old order is outside
 
 
-# ---------- money / validation ----------
 @pytest.mark.parametrize("cents,text", [(0, "$0.00"), (5, "$0.05"), (1250, "$12.50"), (123456, "$1234.56")])
 def test_format_money(cents, text):
     assert format_money(cents) == text
@@ -151,7 +148,6 @@ def test_validators():
     assert clean_url("not a url") is None
 
 
-# ---------- config / seed ----------
 def test_admin_ids_parsing(monkeypatch):
     assert Settings(_env_file=None, admin_ids="1, 2;3").admin_ids == [1, 2, 3]
     assert Settings(_env_file=None, admin_ids="").admin_ids == []

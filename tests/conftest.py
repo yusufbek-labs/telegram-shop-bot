@@ -117,7 +117,6 @@ class Harness:
         }
         await self.dp.feed_raw_update(self.bot, update)
 
-    # --- inspection helpers ---
     def sent_to(self, chat_id: int) -> list[SendMessage]:
         return [c for c in self.session.calls if isinstance(c, (SendMessage, SendPhoto)) and c.chat_id == chat_id]
 

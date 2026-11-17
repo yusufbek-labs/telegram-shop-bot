@@ -29,7 +29,6 @@ async def session(seeded):
         yield s
 
 
-# ---------- cart math ----------
 def test_cart_total_pure_function():
     lines = [CartLine(1, "A", 1250, 2), CartLine(2, "B", 999, 3)]
     assert cart_total(lines) == 1250 * 2 + 999 * 3
@@ -51,7 +50,7 @@ async def test_change_quantity_and_removal(session):
     await svc.add(7, 4)
     await svc.change_quantity(7, 1, +2)
     assert {l.product_id: l.quantity for l in (await svc.view(7)).lines} == {1: 3, 4: 1}
-    await svc.change_quantity(7, 4, -1)  # down to zero removes the line
+    await svc.change_quantity(7, 4, -1)
     assert [l.product_id for l in (await svc.view(7)).lines] == [1]
     await svc.remove(7, 1)
     assert (await svc.view(7)).is_empty
@@ -72,11 +71,10 @@ async def test_cannot_add_disabled_product(session):
         await CartService(session).add(7, 9999)
 
 
-# ---------- order totals ----------
 async def test_checkout_snapshots_prices_and_clears_cart(session):
     cart = CartService(session)
-    await cart.add(7, 1, quantity=2)  # 12.50 x 2
-    await cart.add(7, 4)  # 19.00
+    await cart.add(7, 1, quantity=2)
+    await cart.add(7, 4)
     order = await OrderService(session).checkout(7, DATA)
     assert order.total_cents == 2 * 1250 + 1900
     assert order.status == "new"
@@ -105,7 +103,6 @@ async def test_checkout_fails_when_product_disabled_meanwhile(session):
         await OrderService(session).checkout(7, DATA)
 
 
-# ---------- status transitions ----------
 EXPECTED = {
     ("new", "confirmed"), ("new", "cancelled"),
     ("confirmed", "shipped"), ("confirmed", "cancelled"),
@@ -156,7 +153,6 @@ async def test_missing_order(session):
         await OrderService(session).change_status(424242, "confirmed", 1000, ADMINS)
 
 
-# ---------- permissions ----------
 async def test_non_admin_cannot_change_status(session):
     order = await _order(session)
     with pytest.raises(PermissionDenied):
