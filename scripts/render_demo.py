@@ -25,7 +25,7 @@ EDGE = Path("C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe")
 ALLOWED = {"b": "b", "strong": "b", "i": "i", "em": "i", "u": "u", "s": "s", "code": "code", "pre": "pre"}
 
 CSS = """
-:root{--bg:#0e1621;--head:#17212b;--bot:#182533;--me:#2b5278;--ink:#e8edf2;--muted:#7f91a4;--btn:#1f2b38;--line:#0a1119}
+:root{--bg:#0e1621;--head:#17212b;--bot:#182533;--me:#2b5278;--ink:#e8edf2;--muted:#7f91a4;--btn:#1b2733;--line:#0a1119}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.38 "Segoe UI","Segoe UI Emoji",system-ui,sans-serif}
 .phone{width:420px;margin:0 0 0 10px;min-height:420px;background:var(--bg);display:flex;flex-direction:column}
@@ -48,13 +48,14 @@ body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.38 "Segoe UI",
 b{font-weight:700;color:#fff}
 code,pre{font-family:Consolas,monospace;color:#8fc7f5;background:rgba(255,255,255,.07);border-radius:4px;padding:0 3px}
 .photo{width:100%;min-width:250px;aspect-ratio:12/5;border-radius:8px;margin:1px 0 6px;background:linear-gradient(135deg,#1b2b3b,#2a4057 55%,#1d3042);color:#6f8397;display:flex;align-items:center;justify-content:center;font-size:13px}
-.kb{display:flex;flex-direction:column;gap:4px;width:0;min-width:100%}
-.row{display:flex;gap:4px}
-.btn{flex:1;min-width:0;text-align:center;background:var(--btn);color:#fff;font-weight:600;border-radius:10px;padding:8px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kb{display:flex;flex-direction:column;gap:3px;width:0;min-width:100%}
+.row{display:flex;gap:3px}
+.btn{flex:1;min-width:0;text-align:center;background:var(--btn);color:#fff;font-weight:600;border-radius:9px;padding:7px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dock{background:var(--head);border-top:1px solid var(--line);padding:8px 10px 10px}
 .dock .input{display:flex;align-items:center;gap:10px;color:var(--muted);padding:4px 4px}
 .dock .input svg{fill:none;stroke:var(--muted);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .dock .input span{flex:1}
+.mono{font-family:"Segoe UI Symbol",sans-serif;color:#6c7883;font-weight:400;font-size:17px;line-height:1}
 .dock .kb{width:100%}
 .dock .btn{background:#222f3d;padding:11px 8px}
 """
@@ -102,8 +103,8 @@ BACK = '<svg width="24" height="24" viewBox="0 0 24 24"><path d="M19 12H5M11 18l
 SEARCH = '<svg width="22" height="22" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>'
 DOTS = ('<svg width="22" height="22" viewBox="0 0 24 24" style="fill:#7f91a4;stroke:none">'
         '<circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg>')
-CHECKS = ('<svg width="17" height="11" viewBox="0 0 17 11"><path d="M1 5.5l3.2 3.2L10 1.5M6 8.7l.5.5L12.5 1.5M12.2 5.2'
-          'l-2.6 3.2"/></svg>')
+CHECKS = ('<svg width="18" height="11" viewBox="0 0 18 11"><path d="M1 5.8l3.2 3.2L10 1.8"/>'
+          '<path d="M6.2 8.6l.4.4L13.2 1.8"/></svg>')
 CLIP = ('<svg width="24" height="24" viewBox="0 0 24 24"><path d="M20 11.5l-7.8 7.8a4.5 4.5 0 0 1-6.4-6.4l8-8a3 3 0 0 1 4.3'
         ' 4.3l-8 8a1.5 1.5 0 0 1-2.1-2.1l7.3-7.3"/></svg>')
 
@@ -112,11 +113,16 @@ def clock(ts: str) -> str:
     return ts[:5]
 
 
+def button_label(text: str) -> str:
+    """Windows draws these symbols as coloured emoji; the Telegram client shows them as muted grey glyphs."""
+    return re.sub(r"[\u2796\u2795\u2716]\ufe0f?", lambda m: f'<span class="mono">{m.group(0)[0]}</span>', escape(text))
+
+
 def keyboard_html(rows: list[list[str]] | None) -> str:
     if not rows:
         return ""
     body = "".join(
-        '<div class="row">' + "".join(f'<div class="btn">{escape(b)}</div>' for b in row) + "</div>" for row in rows
+        '<div class="row">' + "".join(f'<div class="btn">{button_label(b)}</div>' for b in row) + "</div>" for row in rows
     )
     return f'<div class="kb">{body}</div>'
 
