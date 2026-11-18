@@ -139,9 +139,11 @@ class Chat:
         kind = e["type"]
         if kind == "user_text":
             self.items.append({"side": "me", "text": e["text"], "ts": e["ts"]})
+        elif kind == "user_photo":
+            self.items.append({"side": "me", "text": "", "ts": e["ts"], "photo": "Payment receipt"})
         elif kind in ("send", "photo"):
             item = {"side": "bot", "text": e["text"], "ts": e["ts"], "keyboard": e.get("keyboard"),
-                    "photo": kind == "photo", "edited": False}
+                    "photo": photo_label(e["photo"]) if kind == "photo" else None, "edited": False}
             self.items.append(item)
             self.by_id[e["message_id"]] = item
             if e.get("reply_keyboard"):
@@ -159,11 +161,16 @@ class Chat:
         return items, self.reply_keyboard
 
 
+def photo_label(photo: str) -> str:
+    """Product cards send an image URL; anything else is a Telegram file_id, i.e. an uploaded receipt."""
+    return "Product photo" if photo.startswith("http") else "Payment receipt"
+
+
 def item_html(item: dict) -> str:
+    photo = f'<div class="photo">{item["photo"]}</div>' if item.get("photo") else ""
     if item["side"] == "me":
-        return (f'<div class="item me"><div class="bubble">{escape(item["text"])}'
+        return (f'<div class="item me"><div class="bubble">{photo}{escape(item["text"])}'
                 f'<span class="meta">{clock(item["ts"])}{CHECKS}</span></div></div>')
-    photo = '<div class="photo">Product photo</div>' if item["photo"] else ""
     meta = f'edited {clock(item["edit_ts"])}' if item["edited"] else clock(item["ts"])
     return (
         f'<div class="item bot"><div class="bubble">{photo}{telegram_html(item["text"])}'

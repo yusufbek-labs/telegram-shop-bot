@@ -39,6 +39,8 @@ CUSTOMER_ID = 2000
 CUSTOMER_NAME = "Alex Morgan"
 CUSTOMER_PHONE = "+1 555 0100"
 CUSTOMER_ADDRESS = "42 Birch Lane, Springfield"
+PAYMENT_DETAILS = "Maple & Pine Goods Ltd\nIBAN: DE89 3704 0044 0532 0130 00\nReference: your name"
+RECEIPT_FILE_ID = "AgACAgIAAxkBAAdemo-receipt"
 START = datetime.now(timezone.utc).replace(microsecond=0)
 
 
@@ -151,6 +153,14 @@ class Scenario:
         update = {"update_id": next(self._update_ids), "message": self._message(uid, name, text)}
         await self.dp.feed_raw_update(self.bot, update)
 
+    async def send_photo(self, uid: int, name: str, file_id: str) -> None:
+        self.session.actor = uid
+        self.session.events.append({"type": "user_photo", "ts": self.session.tick(15), "chat": uid})
+        photo = [{"file_id": file_id, "file_unique_id": "u", "width": 800, "height": 1000}]
+        message = self._message(uid, name, None)
+        update = {"update_id": next(self._update_ids), "message": {**message, "photo": photo}}
+        await self.dp.feed_raw_update(self.bot, update)
+
     def snap(self, uid: int, name: str, last: int) -> None:
         """Mark a moment worth a screenshot: the chat as it looks now, showing its last `last` messages."""
         self.session.events.append({
@@ -190,7 +200,7 @@ async def run_scenario() -> dict:
     with tempfile.TemporaryDirectory() as tmp:
         settings = Settings(
             _env_file=None, bot_token="42:" + "A" * 35, admin_ids=[ADMIN_ID],
-            db_path=str(Path(tmp) / "demo.db"),
+            db_path=str(Path(tmp) / "demo.db"), payment_details=PAYMENT_DETAILS,
         )
         engine, sessionmaker = create_engine_and_sessionmaker(settings.db_url)
         await init_db(engine)
@@ -222,6 +232,22 @@ async def run_scenario() -> dict:
         await s.tap(*a, "Confirmed")
         await s.tap(*a, "Shipped")
         s.snap(c[0], "status-update", last=3)
+
+        await s.tap(*c, "Search")
+        await s.say(*c, "candle")
+        s.snap(c[0], "search", last=8)
+
+        await s.tap(*c, "Add to cart", near="Pine Forest Candle")
+        await s.tap(*c, "Cart")
+        await s.tap(*c, "Checkout")
+        await s.say(*c, CUSTOMER_NAME)
+        await s.say(*c, CUSTOMER_PHONE)
+        await s.say(*c, CUSTOMER_ADDRESS)
+        await s.tap(*c, "Bank transfer")
+        await s.send_photo(*c, RECEIPT_FILE_ID)
+        s.snap(c[0], "receipt", last=4)
+        await s.tap(*c, "Confirm")
+        s.snap(a[0], "admin-receipt", last=1)
         await engine.dispose()
 
     return {
