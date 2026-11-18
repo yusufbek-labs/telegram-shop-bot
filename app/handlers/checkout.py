@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 from html import escape
+from typing import TYPE_CHECKING
 
 from aiogram import Bot, F, Router
 from aiogram.fsm.context import FSMContext
@@ -20,6 +21,9 @@ from app.services.money import format_money
 from app.services.orders import CheckoutData, CartChangedError, EmptyCartError, OrderService
 from app.services.validation import clean_address, clean_name, clean_phone
 from app.states import Checkout
+
+if TYPE_CHECKING:
+    from app.sheets import SheetsSync
 
 log = logging.getLogger(__name__)
 router = Router(name="checkout")
@@ -161,7 +165,8 @@ async def wrong_receipt(message: Message, lang: str) -> None:
 
 @router.callback_query(Checkout.confirm, Confirm.filter(F.ctx == "checkout"))
 async def confirm_order(cb: CallbackQuery, callback_data: Confirm, state: FSMContext, lang: str,
-                        session: AsyncSession, settings: Settings, bot: Bot) -> None:
+                        session: AsyncSession, settings: Settings, bot: Bot,
+                        sheets: SheetsSync | None = None) -> None:
     if not callback_data.ok:
         await state.clear()
         await show(cb, t(lang, "checkout_cancelled"), kb.main_menu(lang))
@@ -185,4 +190,6 @@ async def confirm_order(cb: CallbackQuery, callback_data: Confirm, state: FSMCon
     )
     await session.commit()  # persist before admins can tap status buttons
     log.info("order %s placed by %s total=%s", order.id, cb.from_user.id, order.total_cents)
+    if sheets is not None:
+        sheets.order_created(order)
     await notify_admins_new_order(bot, session, settings, order)

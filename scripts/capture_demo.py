@@ -132,11 +132,11 @@ class Recorder(BaseSession):
 
 
 class Scenario:
-    def __init__(self, settings: Settings, sessionmaker) -> None:
+    def __init__(self, settings: Settings, sessionmaker, sheets=None) -> None:
         self.session = Recorder()
         self.bot = Bot(token=settings.bot_token, session=self.session,
                        default=DefaultBotProperties(parse_mode="HTML"))
-        self.dp = build_dispatcher(settings, sessionmaker)
+        self.dp = build_dispatcher(settings, sessionmaker, sheets)
         self._update_ids = itertools.count(1)
 
     @staticmethod

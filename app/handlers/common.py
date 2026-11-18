@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings
 from app.db.models import Order, Product
-from app.formatting import order_card, product_card
+from app.formatting import order_card, product_card, status_label
 from app.i18n import t
 from app.keyboards import admin as admin_kb
 from app.keyboards import customer as customer_kb
@@ -97,3 +97,14 @@ async def notify_admins_new_order(bot: Bot, session: AsyncSession, settings: Set
                                    reply_to=sent.message_id)
         except TelegramAPIError as exc:  # an admin who never opened the bot cannot be messaged
             log.warning("cannot notify admin %s: %s", admin_id, exc)
+
+
+async def notify_customer_status(bot: Bot, session: AsyncSession, order: Order) -> None:
+    customer = await UserRepo(session).get(order.user_id)
+    lang = customer.language if customer else "en"
+    try:
+        await bot.send_message(
+            order.user_id, t(lang, "order_status_update", id=order.id, status=status_label(lang, order.status))
+        )
+    except TelegramAPIError as exc:
+        log.warning("could not notify customer %s: %s", order.user_id, exc)

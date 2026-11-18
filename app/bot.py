@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
 from aiogram import Bot, Dispatcher
 from aiogram.exceptions import TelegramBadRequest
@@ -14,12 +15,16 @@ from app.handlers import build_router
 from app.i18n import t
 from app.middlewares import DbMiddleware
 
+if TYPE_CHECKING:
+    from app.sheets import SheetsSync
+
 log = logging.getLogger(__name__)
 
 
-def build_dispatcher(settings: Settings, sessionmaker: async_sessionmaker[AsyncSession]) -> Dispatcher:
+def build_dispatcher(settings: Settings, sessionmaker: async_sessionmaker[AsyncSession],
+                     sheets: SheetsSync | None = None) -> Dispatcher:
     # Extra kwargs become workflow data, injectable into handlers by name.
-    dp = Dispatcher(storage=MemoryStorage(), settings=settings, sessionmaker=sessionmaker)
+    dp = Dispatcher(storage=MemoryStorage(), settings=settings, sessionmaker=sessionmaker, sheets=sheets)
     dp.update.outer_middleware(DbMiddleware(sessionmaker))
     dp.include_router(build_router())
 

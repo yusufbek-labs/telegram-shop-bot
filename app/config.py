@@ -4,7 +4,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Annotated
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
@@ -24,6 +24,11 @@ class Settings(BaseSettings):
     # Bank details shown to customers who pay by transfer; empty hides that payment option.
     # In .env write a line break as a backslash followed by n.
     payment_details: str = ""
+    # Optional Google Sheets integration; it is on only when both the sheet id and the key file are set.
+    google_sheet_id: str = ""
+    google_service_account_file: str = ""
+    sheets_sync_seconds: int = Field(default=60, ge=10)
+    sheets_menu_sync: bool = True
 
     @field_validator("admin_ids", mode="before")
     @classmethod
@@ -40,6 +45,10 @@ class Settings(BaseSettings):
     @classmethod
     def _unescape_newlines(cls, value: str) -> str:
         return value.replace("\\n", "\n").strip()
+
+    @property
+    def sheets_enabled(self) -> bool:
+        return bool(self.google_sheet_id.strip() and self.google_service_account_file.strip())
 
     @property
     def db_url(self) -> str:

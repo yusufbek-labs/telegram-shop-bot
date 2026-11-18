@@ -12,6 +12,7 @@ from aiogram.enums import ParseMode
 from app.bot import build_dispatcher, set_commands
 from app.config import get_settings
 from app.db.session import create_engine_and_sessionmaker, init_db
+from app.sheets import create_sheets
 
 log = logging.getLogger("app")
 
@@ -35,13 +36,21 @@ async def run() -> int:
     engine, sessionmaker = create_engine_and_sessionmaker(settings.db_url)
     await init_db(engine)
     bot = Bot(token=settings.bot_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-    dp = build_dispatcher(settings, sessionmaker)
+    sheets = create_sheets(settings)
+    dp = build_dispatcher(settings, sessionmaker, sheets)
+    sync_task = None
     try:
         await set_commands(bot, settings)
         me = await bot.get_me()
         log.info("started as @%s, admins=%s", me.username, settings.admin_ids)
+        if sheets is not None:
+            sync_task = asyncio.create_task(sheets.run_forever(bot, sessionmaker))
         await dp.start_polling(bot)
     finally:
+        if sync_task is not None:
+            sync_task.cancel()
+        if sheets is not None:
+            await sheets.drain(timeout=15)
         await bot.session.close()
         await engine.dispose()
     return 0

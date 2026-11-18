@@ -113,6 +113,10 @@ class OrderService:
 
     async def change_status(self, order_id: int, new_status: str, actor_id: int, admin_ids: Iterable[int]) -> Order:
         require_admin(actor_id, admin_ids)
+        return await self.apply_status(order_id, new_status)
+
+    async def apply_status(self, order_id: int, new_status: str) -> Order:
+        """Move an order along the state machine; the caller has already checked who is asking."""
         order = await self.orders.get(order_id)
         if order is None:
             raise OrderNotFound(order_id)

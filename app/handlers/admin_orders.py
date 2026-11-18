@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
 from aiogram import Bot, F, Router
-from aiogram.exceptions import TelegramAPIError
 from aiogram.filters import Command, CommandObject
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
@@ -13,12 +13,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.callbacks import OrderOpen, OrderReceipt, OrdersFilter, OrderStatusCb
 from app.config import Settings
 from app.formatting import order_card, status_label
-from app.handlers.common import IsAdmin, send_receipt, show
+from app.handlers.common import IsAdmin, notify_customer_status, send_receipt, show
 from app.i18n import t
 from app.keyboards import admin as akb
-from app.repositories import OrderRepo, UserRepo
+from app.repositories import OrderRepo
 from app.services.orders import STATUSES, InvalidTransition, OrderNotFound, OrderService
 from app.services.permissions import PermissionDenied
+
+if TYPE_CHECKING:
+    from app.sheets import SheetsSync
 
 log = logging.getLogger(__name__)
 
@@ -92,7 +95,7 @@ async def open_receipt(cb: CallbackQuery, callback_data: OrderReceipt, lang: str
 
 @status_router.callback_query(OrderStatusCb.filter())
 async def change_status(cb: CallbackQuery, callback_data: OrderStatusCb, lang: str, session: AsyncSession,
-                        settings: Settings, bot: Bot) -> None:
+                        settings: Settings, bot: Bot, sheets: SheetsSync | None = None) -> None:
     try:
         order = await OrderService(session).change_status(
             callback_data.order_id, callback_data.status, cb.from_user.id, settings.admin_ids
@@ -116,13 +119,6 @@ async def change_status(cb: CallbackQuery, callback_data: OrderStatusCb, lang: s
     log.info("order %s -> %s by admin %s", order.id, order.status, cb.from_user.id)
     await cb.answer(t(lang, "status_changed", id=order.id, status=status_label(lang, order.status)))
     await show(cb, order_card(lang, order, settings.currency_symbol), akb.order_actions(lang, order), answer=False)
-
-    customer = await UserRepo(session).get(order.user_id)
-    c_lang = customer.language if customer else "en"
-    try:
-        await bot.send_message(
-            order.user_id,
-            t(c_lang, "order_status_update", id=order.id, status=status_label(c_lang, order.status)),
-        )
-    except TelegramAPIError as exc:
-        log.warning("could not notify customer %s: %s", order.user_id, exc)
+    if sheets is not None:
+        sheets.order_status_changed(order.id, order.status)
+    await notify_customer_status(bot, session, order)

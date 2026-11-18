@@ -87,13 +87,13 @@ def _release_routers() -> None:
 class Harness:
     """Feeds raw updates into a real Dispatcher and exposes what the bot answered."""
 
-    def __init__(self, settings: Settings, sessionmaker):
+    def __init__(self, settings: Settings, sessionmaker, sheets=None):
         self.session = FakeSession()
         self.bot = Bot(
             token=settings.bot_token, session=self.session, default=DefaultBotProperties(parse_mode="HTML")
         )
         _release_routers()
-        self.dp = build_dispatcher(settings, sessionmaker)
+        self.dp = build_dispatcher(settings, sessionmaker, sheets)
         self._update_ids = itertools.count(1)
 
     @staticmethod
