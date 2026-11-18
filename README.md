@@ -6,7 +6,7 @@ A ready-to-run Telegram shop: customers browse a catalog, fill a cart and check 
 
 ![Test results](docs/test-results.png)
 
-*Real output of `python -m pytest -q` (309 tests, no network, no bot token needed). Regenerate with `python -m scripts.make_test_image`.*
+*Real output of `python -m pytest -q` (330 tests, no network, no bot token needed). Regenerate with `python -m scripts.make_test_image`.*
 
 ---
 
@@ -135,6 +135,30 @@ If the tab is new or empty, the bot first fills it with the current catalog, so 
 - The bot owns the Orders columns A to J and the Menu columns A to F; put your own notes in columns to the right.
 - Verified with an in-memory sheet and a stubbed gspread client; a run against a real spreadsheet has not been done yet.
 
+### Public demo mode (optional)
+
+Set `DEMO_MODE=true` to let anyone try the bot, for example from a portfolio link. Normal operation is unchanged when it is off.
+
+What a visitor sees:
+
+- `/start` adds a note: "This is a demo shop. Please don't enter real personal data." (English and Russian).
+- After confirming an order, the visitor also receives a copy of exactly what the shop owner gets (the new-order card with the status buttons, and the receipt if there is one), headed "This is what the shop owner gets:". The buttons are there to look at; pressing them only shows a message that they are for the owner. Visitors never get admin rights.
+- After `DEMO_STATUS_SECONDS` (default 60) the order moves to the next status by itself and the visitor gets the usual status message, so the whole flow can be seen in two minutes. This only happens if nobody changed the order in the meantime, it never cancels, and `0` turns it off.
+- A visitor can place `DEMO_MAX_ORDERS_PER_DAY` orders (default 5) in any 24 hours. The owner is not limited.
+
+Housekeeping: orders older than 7 days are deleted (with their lines) on startup and then once a day, so a public demo database does not grow forever. On start the catalog is filled with the demo products, each with a public placeholder photo, if it is empty (`python -m scripts.seed --demo` does the same by hand; add `--force` to reset). Real people can type anything into a public bot, so use a separate bot token and database for the demo, never your real shop's.
+
+To run it:
+
+```
+BOT_TOKEN=<token of a separate demo bot>
+ADMIN_IDS=<your Telegram id, to get the real owner notifications>
+DB_PATH=data/demo.db
+DEMO_MODE=true
+```
+
+then `python run.py` (or `python -m app`, or `docker compose up -d --build`). Put those lines in `.env`. Open the bot, `/start`, and place an order. Without a Google Sheet nothing else is needed; with one configured, the demo orders also land in the Orders tab.
+
 ### Settings
 
 Set in `.env` (copy `.env.example`):
@@ -154,6 +178,9 @@ Set in `.env` (copy `.env.example`):
 | `GOOGLE_SERVICE_ACCOUNT_FILE` | (empty) | Path to the service account JSON key. Both settings must be set to turn Sheets on |
 | `SHEETS_SYNC_SECONDS` | `60` | How often the Menu and Orders tabs are read (minimum 10) |
 | `SHEETS_MENU_SYNC` | `true` | `false` stops reading the Menu tab (orders are still written) |
+| `DEMO_MODE` | `false` | Public demo, see above |
+| `DEMO_MAX_ORDERS_PER_DAY` | `5` | Orders one visitor may place per day in demo mode |
+| `DEMO_STATUS_SECONDS` | `60` | Delay before a demo order moves to the next status; `0` disables it |
 
 Product names and descriptions are entered in one language by the admin; category names (both languages) and all bot texts are bilingual.
 
@@ -200,6 +227,8 @@ Python 3.12, [aiogram 3](https://docs.aiogram.dev/) (polling, FSM, typed callbac
 app/
   main.py, bot.py        entry point; dispatcher + error handler + command menus
   config.py              Settings from .env
+  demo.py                public demo mode: order limit, automatic status, cleanup of old orders
+  notifications.py       messages the bot sends on its own (customer status updates)
   middlewares.py         one DB session per update, user upsert, language injection
   handlers/              Telegram layer only: parse input, call services, render
     start, catalog, search, cart, checkout, admin_orders, admin_products,
@@ -218,7 +247,7 @@ app/
 scripts/seed.py          demo catalog (idempotent)
 scripts/make_test_image.py  renders docs/test-results.png from real pytest output
 run.py                   one-command bootstrap
-tests/                   309 tests
+tests/                   330 tests
 ```
 
 Design notes:
@@ -244,11 +273,13 @@ pip install -r requirements-dev.txt        # or use the .venv created by run.py
 python -m pytest -q
 ```
 
-309 tests, about 8 seconds, no network and no real token:
+330 tests, about 8 seconds, no network and no real token:
 
 - **Services**: cart math and quantity limits, order totals and price snapshots, the full status transition matrix, permission checks, broadcast rate limiter (fake clock), flood-control and blocked-user handling, stats windows and timezone, validation, money, config parsing, seed.
 - **i18n**: both languages have identical keys and placeholders, every status and payment method has a label, language detection.
 - **Handlers**: a real aiogram `Dispatcher` is fed raw updates while the Bot uses a recording fake session, so the tests exercise real routing, filters, middleware, FSM and SQLite. Covered: language detection and switching, the complete purchase flow, admin notification, status buttons (refused forged transition, refused non-admin, customer notified), cart controls, checkout validation, unknown input, product toggle and delete, add/edit product FSMs (including photo upload and category change), category add / rename / guarded delete, search (English and Cyrillic, case-insensitive, nothing found, result cap), bank transfer checkout (receipt as photo, as PDF, wrong message type, wrong file type, cancel), the admin notification carrying the receipt, opening the receipt from the order card, `/stats`, broadcast confirm and cancel. The startup upgrade of an old `orders` table is tested with a database in the old layout.
+- **Google Sheets**: with an in-memory sheet (and a stubbed gspread client for the real backend's call shapes): order row columns and timezone, a failing sheet not breaking checkout and being retried, giving up after the last retry, menu import (add, update, hide, bad rows skipped, empty tab filled from the catalog, old orders kept), status changes from the sheet (applied and customer notified, forbidden transitions and junk values ignored and reset), feature off making no sheet calls.
+- **Demo mode**: note on `/start`, the owner's copy for the visitor (with receipt), inactive buttons, automatic status change (and not when the owner already acted), daily order limit, cleanup of old orders, demo seed.
 
 `python -m scripts.make_test_image` re-runs the suite and regenerates the screenshot at the top.
 
