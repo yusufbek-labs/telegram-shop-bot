@@ -1,4 +1,4 @@
-"""Checkout FSM: name -> phone -> address -> payment -> confirmation."""
+"""Checkout FSM: name -> phone -> address -> payment -> (bank receipt) -> confirmation."""
 from __future__ import annotations
 
 import logging
@@ -6,16 +6,16 @@ from html import escape
 
 from aiogram import Bot, F, Router
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
+from aiogram.types import CallbackQuery, Document, Message, ReplyKeyboardRemove
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.callbacks import CartAct, Confirm, Pay
 from app.config import Settings
-from app.formatting import lines_text, payment_label
+from app.formatting import lines_text, payment_label, receipt_line
 from app.handlers.common import notify_admins_new_order, show
 from app.i18n import t
 from app.keyboards import customer as kb
-from app.services.cart import CartService
+from app.services.cart import CartService, CartView
 from app.services.money import format_money
 from app.services.orders import CheckoutData, CartChangedError, EmptyCartError, OrderService
 from app.services.validation import clean_address, clean_name, clean_phone
@@ -70,35 +70,93 @@ async def _save_phone(message: Message, state: FSMContext, lang: str, raw: str) 
 
 
 @router.message(Checkout.address, TEXT)
-async def got_address(message: Message, state: FSMContext, lang: str) -> None:
+async def got_address(message: Message, state: FSMContext, lang: str, settings: Settings) -> None:
     address = clean_address(message.text)
     if address is None:
         await message.answer(t(lang, "invalid_address"))
         return
     await state.update_data(address=address)
     await state.set_state(Checkout.payment)
-    await message.answer(t(lang, "checkout_payment"), reply_markup=kb.payment(lang))
+    await message.answer(t(lang, "checkout_payment"), reply_markup=kb.payment(lang, bool(settings.payment_details)))
 
 
 @router.callback_query(Checkout.payment, Pay.filter())
 async def got_payment(cb: CallbackQuery, callback_data: Pay, state: FSMContext, lang: str,
                       session: AsyncSession, settings: Settings) -> None:
-    await state.update_data(payment=callback_data.method)
-    data = await state.get_data()
-    view = await CartService(session).view(cb.from_user.id)
+    method = callback_data.method
+    if method == "transfer" and not settings.payment_details:  # option switched off since the button was sent
+        await cb.answer(t(lang, "stale_button"), show_alert=True)
+        return
+    view = await _cart_view(cb, state, lang, session)
+    if view is None:
+        return
+    await state.update_data(payment=method, receipt_file_id=None, receipt_type=None)
+    if method == "transfer":
+        await state.set_state(Checkout.receipt)
+        await show(cb, t(lang, "checkout_receipt", details=escape(settings.payment_details),
+                         total=format_money(view.total_cents, settings.currency_symbol)))
+        return
+    await _show_summary(cb, view, state, lang, settings)
+
+
+async def _cart_view(event: Message | CallbackQuery, state: FSMContext, lang: str,
+                     session: AsyncSession) -> CartView | None:
+    """The cart, or None (after telling the user) if it was emptied while the form was open."""
+    view = await CartService(session).view(event.from_user.id)
     if view.is_empty:
         await state.clear()
-        await show(cb, t(lang, "cart_empty"), kb.back_to_menu(lang))
-        return
+        await show(event, t(lang, "cart_empty"), kb.back_to_menu(lang))
+        return None
+    return view
+
+
+async def _show_summary(event: Message | CallbackQuery, view: CartView, state: FSMContext, lang: str,
+                        settings: Settings) -> None:
+    data = await state.get_data()
     await state.set_state(Checkout.confirm)
     summary = t(
         lang, "checkout_summary",
         items=lines_text(lang, view.lines, settings.currency_symbol),
         total=format_money(view.total_cents, settings.currency_symbol),
         name=escape(data["name"]), phone=escape(data["phone"]), address=escape(data["address"]),
-        payment=payment_label(lang, callback_data.method),
+        payment=payment_label(lang, data["payment"]),
+        receipt=receipt_line(lang, bool(data.get("receipt_file_id"))),
     )
-    await show(cb, summary, kb.confirm(lang, "checkout"))
+    await show(event, summary, kb.confirm(lang, "checkout"))
+
+
+def _is_receipt_document(document: Document) -> bool:
+    mime = document.mime_type or ""
+    return mime == "application/pdf" or mime.startswith("image/")
+
+
+async def _save_receipt(message: Message, file_id: str, kind: str, state: FSMContext, lang: str,
+                        session: AsyncSession, settings: Settings) -> None:
+    view = await _cart_view(message, state, lang, session)
+    if view is None:
+        return
+    await state.update_data(receipt_file_id=file_id, receipt_type=kind)
+    await _show_summary(message, view, state, lang, settings)
+
+
+@router.message(Checkout.receipt, F.photo)
+async def got_receipt_photo(message: Message, state: FSMContext, lang: str, session: AsyncSession,
+                            settings: Settings) -> None:
+    await _save_receipt(message, message.photo[-1].file_id, "photo", state, lang, session, settings)
+
+
+@router.message(Checkout.receipt, F.document)
+async def got_receipt_document(message: Message, state: FSMContext, lang: str, session: AsyncSession,
+                               settings: Settings) -> None:
+    if not _is_receipt_document(message.document):
+        await message.answer(t(lang, "receipt_invalid"))
+        return
+    await _save_receipt(message, message.document.file_id, "document", state, lang, session, settings)
+
+
+@router.message(Checkout.receipt, ~F.text.startswith("/"))
+async def wrong_receipt(message: Message, lang: str) -> None:
+    await message.answer(t(lang, "receipt_invalid"))
 
 
 @router.callback_query(Checkout.confirm, Confirm.filter(F.ctx == "checkout"))
@@ -112,7 +170,8 @@ async def confirm_order(cb: CallbackQuery, callback_data: Confirm, state: FSMCon
     try:
         order = await OrderService(session).checkout(
             cb.from_user.id,
-            CheckoutData(data["name"], data["phone"], data["address"], data["payment"]),
+            CheckoutData(data["name"], data["phone"], data["address"], data["payment"],
+                         data.get("receipt_file_id"), data.get("receipt_type")),
         )
     except (EmptyCartError, CartChangedError):
         await state.clear()

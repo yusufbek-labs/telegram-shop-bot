@@ -34,3 +34,8 @@ def clean_url(text: str) -> str | None:
     if parsed.scheme in ("http", "https") and parsed.netloc and len(text) <= 500:
         return text
     return None
+
+
+def clean_query(text: str) -> str | None:
+    text = " ".join(text.split())
+    return text if 2 <= len(text) <= 50 else None

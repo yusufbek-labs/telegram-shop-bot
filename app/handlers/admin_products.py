@@ -9,7 +9,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.callbacks import Confirm, EditField, PickCategory, ProductEdit, ProductToggle
+from app.callbacks import AdminNav, Confirm, EditField, PickCategory, ProductDelete, ProductEdit, ProductToggle
 from app.config import Settings
 from app.formatting import product_card
 from app.handlers.common import IsAdmin, show
@@ -17,6 +17,7 @@ from app.i18n import t
 from app.keyboards import admin as akb
 from app.keyboards import customer as ckb
 from app.repositories import CatalogRepo
+from app.services.catalog import delete_product
 from app.services.money import format_money, parse_price
 from app.services.validation import clean_text, clean_url
 from app.states import AddProduct, EditProduct
@@ -52,6 +53,27 @@ async def toggle_product(cb: CallbackQuery, callback_data: ProductToggle, lang: 
     product.is_active = not product.is_active
     state_text = t(lang, "state_on" if product.is_active else "state_off")
     await cb.answer(t(lang, "product_toggled", name=product.name, state=state_text))
+    await _render_products(cb, lang, session, settings)
+
+
+@router.callback_query(AdminNav.filter(F.section == "products"))
+async def products_nav(cb: CallbackQuery, lang: str, session: AsyncSession, settings: Settings) -> None:
+    await _render_products(cb, lang, session, settings)
+
+
+@router.callback_query(ProductDelete.filter())
+async def delete_product_button(cb: CallbackQuery, callback_data: ProductDelete, lang: str,
+                                session: AsyncSession, settings: Settings) -> None:
+    product = await CatalogRepo(session).product(callback_data.product_id)
+    if product is None:
+        await cb.answer(t(lang, "stale_button"), show_alert=True)
+        return
+    if not callback_data.confirmed:
+        await show(cb, t(lang, "product_delete_confirm", name=escape(product.name)),
+                   akb.delete_product_confirm(lang, product.id))
+        return
+    await delete_product(session, product.id)
+    await cb.answer(t(lang, "product_deleted"))
     await _render_products(cb, lang, session, settings)
 
 
@@ -116,12 +138,25 @@ async def add_image(message: Message, state: FSMContext, lang: str, settings: Se
         if url is None:
             await message.answer(t(lang, "invalid_url"))
             return
-    await state.update_data(image_url=url)
+    await _preview(message, state, lang, settings, url)
+
+
+@router.message(AddProduct.image, F.photo)
+async def add_image_photo(message: Message, state: FSMContext, lang: str, settings: Settings) -> None:
+    # Telegram accepts a stored file_id wherever a photo URL is accepted, so it goes in image_url too.
+    await _preview(message, state, lang, settings, message.photo[-1].file_id)
+
+
+async def _preview(message: Message, state: FSMContext, lang: str, settings: Settings, image: str | None) -> None:
+    await state.update_data(image_url=image)
     data = await state.get_data()
+    if image is None:
+        image_line = ""
+    else:
+        image_line = "\n" + (escape(image) if image.startswith("http") else t(lang, "image_photo"))
     card = (
         f"<b>{escape(data['name'])}</b>\n{escape(data['description'])}\n\n"
-        f"{format_money(data['price_cents'], settings.currency_symbol)}"
-        + (f"\n{escape(url)}" if url else "")
+        f"{format_money(data['price_cents'], settings.currency_symbol)}{image_line}"
     )
     await state.set_state(AddProduct.confirm)
     await message.answer(t(lang, "add_confirm", card=card), reply_markup=ckb.confirm(lang, "product"))
@@ -166,11 +201,34 @@ async def edit_pick_product(cb: CallbackQuery, callback_data: ProductEdit, state
 
 
 @router.callback_query(EditProduct.field, EditField.filter())
-async def edit_pick_field(cb: CallbackQuery, callback_data: EditField, state: FSMContext, lang: str) -> None:
+async def edit_pick_field(cb: CallbackQuery, callback_data: EditField, state: FSMContext, lang: str,
+                          session: AsyncSession) -> None:
     await state.update_data(field=callback_data.field)
     await state.set_state(EditProduct.value)
     await cb.answer()
+    if callback_data.field == "category":
+        cats = await CatalogRepo(session).categories()
+        await cb.message.answer(t(lang, "edit_ask_category"), reply_markup=akb.category_pick(lang, cats))
+        return
     await cb.message.answer(t(lang, "edit_ask_value", field=t(lang, f"field_{callback_data.field}")))
+
+
+@router.callback_query(EditProduct.value, PickCategory.filter())
+async def edit_category(cb: CallbackQuery, callback_data: PickCategory, state: FSMContext, lang: str,
+                        session: AsyncSession, settings: Settings) -> None:
+    data = await state.get_data()
+    repo = CatalogRepo(session)
+    product = await repo.product(data["product_id"])
+    category = await repo.category(callback_data.category_id)
+    await state.clear()
+    if product is None or category is None:
+        await cb.answer(t(lang, "stale_button"), show_alert=True)
+        return
+    product.category_id = category.id
+    await cb.answer()
+    await cb.message.answer(
+        t(lang, "product_updated") + "\n\n" + product_card(lang, product, settings.currency_symbol)
+    )
 
 
 @router.message(EditProduct.value, TEXT)
@@ -179,6 +237,9 @@ async def edit_value(message: Message, state: FSMContext, lang: str, session: As
     data = await state.get_data()
     field, raw = data["field"], message.text
     changes: dict
+    if field == "category":  # chosen with the buttons, not typed
+        await message.answer(t(lang, "edit_ask_category"))
+        return
     if field == "name":
         value = clean_text(raw, 120)
         changes, error = {"name": value}, (value is None and "invalid_text")
@@ -197,6 +258,22 @@ async def edit_value(message: Message, state: FSMContext, lang: str, session: As
     if error:
         await message.answer(t(lang, error))
         return
+    await _apply_changes(message, state, lang, session, settings, changes)
+
+
+@router.message(EditProduct.value, F.photo)
+async def edit_value_photo(message: Message, state: FSMContext, lang: str, session: AsyncSession,
+                           settings: Settings) -> None:
+    data = await state.get_data()
+    if data["field"] != "image":
+        await message.answer(t(lang, "text_expected"))
+        return
+    await _apply_changes(message, state, lang, session, settings, {"image_url": message.photo[-1].file_id})
+
+
+async def _apply_changes(message: Message, state: FSMContext, lang: str, session: AsyncSession,
+                         settings: Settings, changes: dict) -> None:
+    data = await state.get_data()
     product = await CatalogRepo(session).product(data["product_id"])
     await state.clear()
     if product is None:

@@ -12,7 +12,8 @@ from app.services.cart import CartService
 from app.services.permissions import require_admin
 
 STATUSES = ("new", "confirmed", "shipped", "delivered", "cancelled")
-PAYMENT_METHODS = ("cash", "card")
+PAYMENT_METHODS = ("cash", "card", "transfer")
+RECEIPT_TYPES = ("photo", "document")
 
 # status -> statuses it may move to. delivered / cancelled are final.
 ALLOWED_TRANSITIONS: dict[str, tuple[str, ...]] = {
@@ -36,6 +37,10 @@ class CartChangedError(OrderError):
     """An item in the cart was disabled or removed before checkout finished."""
 
 
+class ReceiptRequired(OrderError):
+    """A bank transfer order needs the customer's receipt."""
+
+
 class OrderNotFound(OrderError):
     pass
 
@@ -50,6 +55,8 @@ class CheckoutData:
     phone: str
     address: str
     payment_method: str
+    receipt_file_id: str | None = None
+    receipt_type: str | None = None
 
 
 def allowed_next(status: str) -> tuple[str, ...]:
@@ -70,6 +77,10 @@ class OrderService:
     async def checkout(self, user_id: int, data: CheckoutData) -> Order:
         if data.payment_method not in PAYMENT_METHODS:
             raise ValueError(f"unknown payment method {data.payment_method!r}")
+        if data.payment_method == "transfer" and not data.receipt_file_id:
+            raise ReceiptRequired()
+        if data.receipt_file_id and data.receipt_type not in RECEIPT_TYPES:
+            raise ValueError(f"unknown receipt type {data.receipt_type!r}")
         view = await self.cart_service.view(user_id)
         if view.is_empty:
             raise EmptyCartError()
@@ -82,6 +93,8 @@ class OrderService:
             phone=data.phone,
             address=data.address,
             payment_method=data.payment_method,
+            receipt_file_id=data.receipt_file_id,
+            receipt_type=data.receipt_type,
             status="new",
             total_cents=view.total_cents,
             items=[

@@ -11,7 +11,7 @@ from app.repositories import CatalogRepo
 from app.services.broadcast import RateLimiter, broadcast
 from app.services.money import format_money, parse_price
 from app.services.stats import StatsService, period_starts
-from app.services.validation import clean_address, clean_name, clean_phone, clean_url
+from app.services.validation import clean_address, clean_name, clean_phone, clean_query, clean_url
 from scripts.seed import seed
 
 
@@ -153,6 +153,19 @@ def test_admin_ids_parsing(monkeypatch):
     assert Settings(_env_file=None, admin_ids="").admin_ids == []
     monkeypatch.setenv("ADMIN_IDS", "10,20")
     assert Settings(_env_file=None).admin_ids == [10, 20]
+
+
+def test_payment_details_setting(monkeypatch):
+    assert Settings(_env_file=None).payment_details == ""
+    assert Settings(_env_file=None, payment_details="  Bank X\\nIBAN 1  ").payment_details == "Bank X\nIBAN 1"
+    monkeypatch.setenv("PAYMENT_DETAILS", "Bank Y\\nAccount 2")
+    assert Settings(_env_file=None).payment_details == "Bank Y\nAccount 2"
+
+
+@pytest.mark.parametrize("raw,cleaned", [("tea", "tea"), ("  tea   cup ", "tea cup"), ("a", None), ("", None),
+                                         ("x" * 51, None)])
+def test_clean_query(raw, cleaned):
+    assert clean_query(raw) == cleaned
 
 
 async def test_seed_is_idempotent(sessionmaker):

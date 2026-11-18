@@ -1,10 +1,7 @@
 """Catalog browsing and product cards."""
 from __future__ import annotations
 
-import logging
-
 from aiogram import F, Router
-from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
@@ -12,14 +9,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.callbacks import AddToCart, Cat, Menu
 from app.config import Settings
-from app.formatting import product_card
-from app.handlers.common import show
+from app.handlers.common import send_product_cards, show
 from app.i18n import t
 from app.keyboards import customer as kb
 from app.repositories import CatalogRepo
 from app.services.cart import CartService, ProductUnavailable
 
-log = logging.getLogger(__name__)
 router = Router(name="catalog")
 
 MAX_CARDS = 10  # keep a category page from flooding the chat
@@ -56,16 +51,7 @@ async def open_category(cb: CallbackQuery, callback_data: Cat, lang: str, sessio
         await show(cb, t(lang, "category_empty"), kb.after_products(lang), answer=False)
         return
     await target.answer(t(lang, "category_header", category=category.name(lang)))
-    for p in products:
-        text = product_card(lang, p, settings.currency_symbol)
-        markup = kb.product_card_kb(lang, p.id)
-        if p.image_url:
-            try:
-                await target.answer_photo(p.image_url, caption=text, reply_markup=markup)
-                continue
-            except TelegramBadRequest:
-                log.warning("bad image url for product %s, falling back to text", p.id)
-        await target.answer(text, reply_markup=markup)
+    await send_product_cards(target, lang, products, settings.currency_symbol)
     await target.answer(
         t(lang, "category_footer", category=category.name(lang), count=len(products)),
         reply_markup=kb.after_products(lang),

@@ -10,10 +10,10 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.callbacks import OrderOpen, OrdersFilter, OrderStatusCb
+from app.callbacks import OrderOpen, OrderReceipt, OrdersFilter, OrderStatusCb
 from app.config import Settings
 from app.formatting import order_card, status_label
-from app.handlers.common import IsAdmin, show
+from app.handlers.common import IsAdmin, send_receipt, show
 from app.i18n import t
 from app.keyboards import admin as akb
 from app.repositories import OrderRepo, UserRepo
@@ -75,6 +75,19 @@ async def open_order(cb: CallbackQuery, callback_data: OrderOpen, lang: str, ses
         await cb.answer(t(lang, "order_not_found"), show_alert=True)
         return
     await show(cb, order_card(lang, order, settings.currency_symbol), akb.order_actions(lang, order))
+
+
+@router.callback_query(OrderReceipt.filter())
+async def open_receipt(cb: CallbackQuery, callback_data: OrderReceipt, lang: str, session: AsyncSession,
+                       bot: Bot) -> None:
+    order = await OrderRepo(session).get(callback_data.order_id)
+    if order is None:
+        await cb.answer(t(lang, "order_not_found"), show_alert=True)
+    elif not order.receipt_file_id:
+        await cb.answer(t(lang, "receipt_missing"), show_alert=True)
+    else:
+        await cb.answer()
+        await send_receipt(bot, cb.from_user.id, order, t(lang, "receipt_caption", id=order.id))
 
 
 @status_router.callback_query(OrderStatusCb.filter())

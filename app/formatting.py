@@ -17,6 +17,10 @@ def payment_label(lang: str, method: str) -> str:
     return t(lang, f"payment_{method}")
 
 
+def receipt_line(lang: str, attached: bool) -> str:
+    return t(lang, "receipt_line") if attached else ""
+
+
 def lines_text(lang: str, lines: list[CartLine], symbol: str) -> str:
     return "\n".join(
         t(lang, "cart_line", name=escape(line.name), qty=line.quantity, sum=format_money(line.subtotal_cents, symbol))
@@ -61,6 +65,7 @@ def order_card(lang: str, order: Order, symbol: str) -> str:
         phone=escape(order.phone),
         address=escape(order.address),
         payment=payment_label(lang, order.payment_method),
+        receipt=receipt_line(lang, bool(order.receipt_file_id)),
         items=order_items_text(order, symbol),
         total=format_money(order.total_cents, symbol),
     )

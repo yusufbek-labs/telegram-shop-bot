@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     # Messages per second for /broadcast. Telegram allows about 30/s globally.
     broadcast_rate: float = 20.0
+    # Bank details shown to customers who pay by transfer; empty hides that payment option.
+    # In .env write a line break as a backslash followed by n.
+    payment_details: str = ""
 
     @field_validator("admin_ids", mode="before")
     @classmethod
@@ -32,6 +35,11 @@ class Settings(BaseSettings):
         if isinstance(value, str):
             return [int(p) for p in value.replace(";", ",").split(",") if p.strip()]
         return [int(v) for v in value]
+
+    @field_validator("payment_details")
+    @classmethod
+    def _unescape_newlines(cls, value: str) -> str:
+        return value.replace("\\n", "\n").strip()
 
     @property
     def db_url(self) -> str:

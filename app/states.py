@@ -6,6 +6,7 @@ class Checkout(StatesGroup):
     phone = State()
     address = State()
     payment = State()
+    receipt = State()
     confirm = State()
 
 
@@ -26,3 +27,12 @@ class EditProduct(StatesGroup):
 class Broadcast(StatesGroup):
     text = State()
     confirm = State()
+
+
+class Search(StatesGroup):
+    query = State()
+
+
+class CategoryForm(StatesGroup):
+    name_en = State()
+    name_ru = State()

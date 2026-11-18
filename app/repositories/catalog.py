@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import Category, Product
+from app.db.models import CartItem, Category, OrderItem, Product
 
 
 class CatalogRepo:
@@ -39,6 +39,21 @@ class CatalogRepo:
         self.session.add(cat)
         await self.session.flush()
         return cat
+
+    async def count_in_category(self, category_id: int) -> int:
+        stmt = select(func.count(Product.id)).where(Product.category_id == category_id)
+        return int(await self.session.scalar(stmt))
+
+    async def delete_category(self, category: Category) -> None:
+        await self.session.delete(category)
+        await self.session.flush()
+
+    async def delete_product(self, product: Product) -> None:
+        """Remove a product; order lines keep their name and price but lose the link."""
+        await self.session.execute(delete(CartItem).where(CartItem.product_id == product.id))
+        await self.session.execute(update(OrderItem).where(OrderItem.product_id == product.id).values(product_id=None))
+        await self.session.delete(product)
+        await self.session.flush()
 
     async def count_products(self) -> int:
         return len(await self.products(only_active=False))

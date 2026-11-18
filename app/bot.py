@@ -53,6 +53,7 @@ async def set_commands(bot: Bot, settings: Settings) -> None:
     customer = [
         BotCommand(command="start", description="Main menu"),
         BotCommand(command="catalog", description="Browse products"),
+        BotCommand(command="search", description="Find a product"),
         BotCommand(command="cart", description="Your cart"),
         BotCommand(command="language", description="Language / Язык"),
         BotCommand(command="help", description="Help"),
@@ -62,6 +63,7 @@ async def set_commands(bot: Bot, settings: Settings) -> None:
         BotCommand(command="products", description="Manage products"),
         BotCommand(command="add_product", description="Add a product"),
         BotCommand(command="edit_product", description="Edit a product"),
+        BotCommand(command="categories", description="Manage categories"),
         BotCommand(command="stats", description="Orders and revenue"),
         BotCommand(command="broadcast", description="Message all users"),
     ]

@@ -14,10 +14,11 @@ def main_menu(lang: str) -> InlineKeyboardMarkup:
     b = InlineKeyboardBuilder()
     b.button(text=t(lang, "btn_catalog"), callback_data=Menu(action="catalog"))
     b.button(text=t(lang, "btn_cart"), callback_data=Menu(action="cart"))
+    b.button(text=t(lang, "btn_search"), callback_data=Menu(action="search"))
     b.button(text=t(lang, "btn_orders"), callback_data=Menu(action="orders"))
     b.button(text=t(lang, "btn_language"), callback_data=Menu(action="language"))
     b.button(text=t(lang, "btn_help"), callback_data=Menu(action="help"))
-    b.adjust(2, 2, 1, repeat=True)
+    b.adjust(2, repeat=True)
     return b.as_markup()
 
 
@@ -47,6 +48,15 @@ def after_products(lang: str) -> InlineKeyboardMarkup:
     b.button(text=t(lang, "btn_back"), callback_data=Menu(action="catalog"))
     b.button(text=t(lang, "btn_cart"), callback_data=Menu(action="cart"))
     b.adjust(2, repeat=True)
+    return b.as_markup()
+
+
+def after_search(lang: str) -> InlineKeyboardMarkup:
+    b = InlineKeyboardBuilder()
+    b.button(text=t(lang, "btn_search_again"), callback_data=Menu(action="search"))
+    b.button(text=t(lang, "btn_catalog"), callback_data=Menu(action="catalog"))
+    b.button(text=t(lang, "btn_cart"), callback_data=Menu(action="cart"))
+    b.adjust(2, 1)
     return b.as_markup()
 
 
@@ -83,9 +93,11 @@ def phone_request(lang: str) -> ReplyKeyboardMarkup:
     )
 
 
-def payment(lang: str) -> InlineKeyboardMarkup:
+def payment(lang: str, with_transfer: bool) -> InlineKeyboardMarkup:
     b = InlineKeyboardBuilder()
     for method in PAYMENT_METHODS:
+        if method == "transfer" and not with_transfer:
+            continue
         b.button(text=t(lang, f"payment_{method}"), callback_data=Pay(method=method))
     b.adjust(1, repeat=True)
     return b.as_markup()

@@ -15,14 +15,16 @@ TEXTS = {
     "btn_confirm": "✅ Confirm",
     "btn_cancel": "✖️ Cancel",
     "btn_share_phone": "📱 Share my number",
+    "btn_search": "🔎 Search",
+    "btn_search_again": "🔎 Search again",
     "help": (
         "<b>How it works</b>\n"
-        "/start - main menu\n/catalog - browse products\n/cart - your cart\n"
+        "/start - main menu\n/catalog - browse products\n/search - find a product\n/cart - your cart\n"
         "/orders - your orders\n/language - change language\n/cancel - abort the current action"
     ),
     "help_admin": (
         "\n\n<b>Admin</b>\n/orders - orders by status\n/products - manage products\n"
-        "/add_product - add a product\n/edit_product - edit a product\n"
+        "/add_product - add a product\n/edit_product - edit a product\n/categories - manage categories\n"
         "/stats - orders and revenue\n/broadcast - message all users"
     ),
     # --- catalog / cart ---
@@ -39,6 +41,12 @@ TEXTS = {
     "cart_line": "{name} × {qty} = {sum}",
     "cart_total": "<b>Total: {total}</b>",
     "cart_cleared": "Cart cleared.",
+    "search_prompt": "What are you looking for? Send a product name or a category.",
+    "search_invalid": "Please send 2 to 50 characters to search for (or /cancel).",
+    "search_header": "<b>Search: {query}</b>\nFound {count}:",
+    "search_footer": "That is everything for «{query}» ({count} shown).",
+    "search_footer_more": "Showing the first {shown} of {count} for «{query}». Narrow the search to see the rest.",
+    "search_nothing": "Nothing found for «{query}». Try a shorter word or browse the catalog.",
     # --- checkout ---
     "checkout_name": "Checkout (1/4)\nWhat is your name?",
     "checkout_phone": "Checkout (2/4)\nSend your phone number: type it or use the button.",
@@ -46,9 +54,16 @@ TEXTS = {
     "checkout_payment": "Checkout (4/4)\nChoose a payment method:",
     "payment_cash": "💵 Cash on delivery",
     "payment_card": "💳 Card on delivery",
+    "payment_transfer": "🏦 Bank transfer",
+    "checkout_receipt": (
+        "<b>Pay by bank transfer</b>\n\n{details}\n\nAmount to pay: <b>{total}</b>\n\n"
+        "Then send a photo or a PDF file of the payment receipt in this chat (or /cancel)."
+    ),
+    "receipt_invalid": "I need the payment receipt as a photo or a PDF file. Please send one, or /cancel.",
+    "receipt_line": "\nReceipt: attached",
     "checkout_summary": (
         "<b>Please confirm your order</b>\n\n{items}\n\n<b>Total: {total}</b>\n\n"
-        "Name: {name}\nPhone: {phone}\nAddress: {address}\nPayment: {payment}"
+        "Name: {name}\nPhone: {phone}\nAddress: {address}\nPayment: {payment}{receipt}"
     ),
     "invalid_name": "Please enter a name between 2 and 60 characters.",
     "invalid_phone": "That does not look like a phone number. Example: +1 555 123 4567",
@@ -84,7 +99,7 @@ TEXTS = {
     "admin_new_order": "🔔 <b>New order #{id}</b>\n\n{details}",
     "admin_order_card": (
         "<b>Order #{id}</b> · {status}\nCreated: {created}\n"
-        "Customer: {name} ({phone})\nAddress: {address}\nPayment: {payment}\n\n"
+        "Customer: {name} ({phone})\nAddress: {address}\nPayment: {payment}{receipt}\n\n"
         "{items}\n\n<b>Total: {total}</b>"
     ),
     "admin_orders_title": "<b>Orders</b>\nFilter by status:",
@@ -94,6 +109,9 @@ TEXTS = {
     "status_changed": "Order #{id} is now {status}.",
     "status_not_allowed": "That status change is not allowed.",
     "order_not_found": "Order not found.",
+    "btn_receipt": "🧾 Receipt",
+    "receipt_caption": "Payment receipt for order #{id}",
+    "receipt_missing": "This order has no receipt.",
     # --- admin: products ---
     "admin_products_title": "<b>Products</b> (tap a name to show/hide it in the shop)",
     "btn_edit": "✏️ Edit",
@@ -104,22 +122,41 @@ TEXTS = {
     "add_name": "Send the product name.",
     "add_price": "Send the price, for example 12.50",
     "add_description": "Send a short description.",
-    "add_image": "Send an image URL (http/https), or - to skip.",
+    "add_image": "Send a photo of the product or an image URL (http/https), or - to skip.",
     "add_confirm": "Save this product?\n\n{card}",
     "product_saved": "Saved product #{id}.",
     "invalid_price": "Invalid price. Use a positive number like 12.50",
     "invalid_text": "Please send text of 1 to 200 characters.",
     "invalid_url": "Please send a valid http(s) URL, or - to skip.",
-    "no_categories": "There are no categories yet. Run the seed script or add one in the database first.",
+    "no_categories": "There are no categories yet. Add one with /categories first.",
     "edit_choose_product": "Choose a product to edit:",
     "edit_choose_field": "Editing <b>{name}</b>. What do you want to change?",
     "field_name": "Name",
     "field_price": "Price",
     "field_description": "Description",
-    "field_image": "Image URL",
-    "edit_ask_value": "Send the new value for: {field}\n(for the image, - removes it)",
+    "field_image": "Image",
+    "field_category": "Category",
+    "edit_ask_category": "Choose the new category:",
+    "edit_ask_value": "Send the new value for: {field}\n(for the image: a photo or a URL, - removes it)",
+    "image_photo": "Photo attached",
     "product_updated": "Product updated.",
     "no_products": "No products yet.",
+    "btn_delete": "🗑 Delete",
+    "product_delete_confirm": "Delete <b>{name}</b> from the shop? Past orders keep their lines.",
+    "product_deleted": "Product deleted.",
+    # --- admin: categories ---
+    "admin_categories_title": (
+        "<b>Categories</b>\nTap a category to rename it, 🗑 to delete it. Only empty categories can be deleted."
+    ),
+    "btn_add_category": "➕ Add category",
+    "category_ask_en": "Send the category name in English.",
+    "category_ask_ru": "Send the category name in Russian.",
+    "category_rename_en": "Renaming <b>{name}</b>. Send the new English name, or - to keep it.",
+    "category_rename_ru": "Send the new Russian name, or - to keep it.",
+    "category_saved": "Category saved.",
+    "category_not_empty": "This category still has {count} product(s). Move or delete them first.",
+    "category_delete_confirm": "Delete the empty category <b>{name}</b>?",
+    "category_deleted": "Category deleted.",
     # --- admin: stats / broadcast ---
     "stats": (
         "<b>Stats</b>\n\nToday: {t_orders} orders, {t_rev}\n"

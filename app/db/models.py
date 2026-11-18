@@ -74,6 +74,9 @@ class Order(Base):
     status: Mapped[str] = mapped_column(String(16), default="new")
     total_cents: Mapped[int] = mapped_column(Integer)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    # Telegram file_id of the bank receipt and its kind ("photo" or "document").
+    receipt_file_id: Mapped[str | None] = mapped_column(String(256))
+    receipt_type: Mapped[str | None] = mapped_column(String(16))
     items: Mapped[list["OrderItem"]] = relationship(
         lazy="selectin", cascade="all, delete-orphan", order_by="OrderItem.id"
     )
