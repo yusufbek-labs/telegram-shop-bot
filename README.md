@@ -96,7 +96,7 @@ To replace the demo catalog: edit `scripts/seed.py` and run `python -m scripts.s
 
 ![Order confirmation and status updates (customer)](docs/screenshots/07-status-update.png)
 
-*Conversation rendered from the bot's real responses, captured by running the actual handlers with a recording Telegram session (`python -m scripts.capture_demo && python -m scripts.render_demo --screenshots`). Styled like a chat; not a screenshot of the Telegram app. Each image is the chat state at one moment, with message edits applied in place; product photos are placeholders. A run against the live Telegram service has not been done yet.*
+*Conversation rendered from the bot's real responses, captured by running the actual handlers with a recording Telegram session (`python -m scripts.capture_demo && python -m scripts.render_demo --screenshots`). Styled after a dark chat theme; not a screenshot of the Telegram app. Each image is the chat state at one moment, with message edits applied in place; product photos are placeholders. A run against the live Telegram service has not been done yet.*
 
 ---
 

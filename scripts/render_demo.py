@@ -25,30 +25,38 @@ EDGE = Path("C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe")
 ALLOWED = {"b": "b", "strong": "b", "i": "i", "em": "i", "u": "u", "s": "s", "code": "code", "pre": "pre"}
 
 CSS = """
-:root{--bg:#dfe6ee;--bot:#ffffff;--me:#d9f2c4;--ink:#16202a;--muted:#6b7a89;--btn:#e4ebf3;--btn-ink:#26527a;--head:#f7f9fb;--line:#c9d3de}
+:root{--bg:#0e1621;--head:#17212b;--bot:#182533;--me:#2b5278;--ink:#e8edf2;--muted:#7f91a4;--btn:#1f2b38;--line:#0a1119}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 "Segoe UI",system-ui,sans-serif}
+body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.38 "Segoe UI","Segoe UI Emoji",system-ui,sans-serif}
 .phone{width:420px;margin:0 0 0 10px;min-height:420px;background:var(--bg);display:flex;flex-direction:column}
-.head{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--head);border-bottom:1px solid var(--line)}
-.avatar{width:40px;height:40px;border-radius:50%;background:#3d7ea6;color:#fff;font-weight:600;display:flex;align-items:center;justify-content:center;letter-spacing:.5px}
-.title{font-weight:600}.sub{font-size:12.5px;color:var(--muted)}
-.feed{flex:1;padding:12px 10px 14px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px}
-.item{display:flex;flex-direction:column;max-width:88%}
-.item.bot{align-self:flex-start;align-items:flex-start}
-.item.me{align-self:flex-end;align-items:flex-end}
-.bubble{border-radius:14px;padding:7px 11px 6px;box-shadow:0 1px 1px rgba(0,0,0,.10);white-space:pre-wrap;overflow-wrap:anywhere}
-.bot .bubble{background:var(--bot);border-bottom-left-radius:4px}
-.me .bubble{background:var(--me);border-bottom-right-radius:4px}
-.meta{display:block;text-align:right;font-size:11px;color:var(--muted);margin-top:2px;white-space:normal}
-code,pre{font-family:Consolas,monospace;background:#eef2f6;border-radius:4px;padding:0 3px}
-.photo{width:100%;min-width:250px;aspect-ratio:12/5;border-radius:9px;margin:-2px 0 6px;background:linear-gradient(135deg,#cfdde8,#e8eef3);color:#6b7a89;display:flex;align-items:center;justify-content:center;font-size:13px}
-.kb{display:flex;flex-direction:column;gap:4px;margin-top:4px;width:100%}
+.head{display:flex;align-items:center;gap:10px;padding:8px 14px 8px 10px;background:var(--head);border-bottom:1px solid var(--line)}
+.head svg{flex:none;fill:none;stroke:var(--muted);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.pill{background:#2f4152;color:#dfe7ee;border-radius:10px;padding:0 7px;font-size:12px;font-weight:600;line-height:18px;margin-left:-4px}
+.avatar{flex:none;width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#4aa3e0,#2a6fb5);color:#fff;font-weight:600;font-size:16px;display:flex;align-items:center;justify-content:center}
+.who{flex:1;min-width:0}
+.title{font-weight:700;color:#fff;line-height:1.25}.sub{font-size:13px;color:var(--muted);line-height:1.2}
+.feed{flex:1;padding:10px 12px 12px;display:flex;flex-direction:column;justify-content:flex-end;gap:5px}
+.item{display:flex;flex-direction:column;max-width:90%;gap:4px}
+.item.bot{align-self:flex-start}
+.item.me{align-self:flex-end}
+.bubble{border-radius:12px;padding:6px 10px 5px;white-space:pre-wrap;overflow-wrap:anywhere}
+.bot .bubble{background:var(--bot);border-bottom-left-radius:6px}
+.me .bubble{background:var(--me);color:#fff;border-bottom-right-radius:6px}
+.meta{display:flex;justify-content:flex-end;align-items:center;gap:3px;font-size:11.5px;color:var(--muted);margin-top:1px;white-space:normal}
+.me .meta{color:#9fc1e4}
+.meta svg{fill:none;stroke:#9fc1e4;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+b{font-weight:700;color:#fff}
+code,pre{font-family:Consolas,monospace;color:#8fc7f5;background:rgba(255,255,255,.07);border-radius:4px;padding:0 3px}
+.photo{width:100%;min-width:250px;aspect-ratio:12/5;border-radius:8px;margin:1px 0 6px;background:linear-gradient(135deg,#1b2b3b,#2a4057 55%,#1d3042);color:#6f8397;display:flex;align-items:center;justify-content:center;font-size:13px}
+.kb{display:flex;flex-direction:column;gap:4px;width:0;min-width:100%}
 .row{display:flex;gap:4px}
-.btn{flex:1;min-width:0;text-align:center;background:var(--btn);color:var(--btn-ink);border-radius:9px;padding:7px 8px;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{flex:1;min-width:0;text-align:center;background:var(--btn);color:#fff;font-weight:600;border-radius:10px;padding:8px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dock{background:var(--head);border-top:1px solid var(--line);padding:8px 10px 10px}
-.dock .input{background:#fff;border:1px solid var(--line);border-radius:18px;padding:7px 14px;color:var(--muted)}
-.dock .kb{margin:0}
-.dock .btn{background:#fff;color:var(--ink);border:1px solid var(--line);padding:10px 8px}
+.dock .input{display:flex;align-items:center;gap:10px;color:var(--muted);padding:4px 4px}
+.dock .input svg{fill:none;stroke:var(--muted);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.dock .input span{flex:1}
+.dock .kb{width:100%}
+.dock .btn{background:#222f3d;padding:11px 8px}
 """
 
 JS = "document.body.dataset.h=Math.ceil(document.querySelector('.phone').getBoundingClientRect().height);"
@@ -88,6 +96,16 @@ def telegram_html(text: str) -> str:
     parser.feed(text)
     parser.close()
     return parser.result()
+
+
+BACK = '<svg width="24" height="24" viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>'
+SEARCH = '<svg width="22" height="22" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>'
+DOTS = ('<svg width="22" height="22" viewBox="0 0 24 24" style="fill:#7f91a4;stroke:none">'
+        '<circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg>')
+CHECKS = ('<svg width="17" height="11" viewBox="0 0 17 11"><path d="M1 5.5l3.2 3.2L10 1.5M6 8.7l.5.5L12.5 1.5M12.2 5.2'
+          'l-2.6 3.2"/></svg>')
+CLIP = ('<svg width="24" height="24" viewBox="0 0 24 24"><path d="M20 11.5l-7.8 7.8a4.5 4.5 0 0 1-6.4-6.4l8-8a3 3 0 0 1 4.3'
+        ' 4.3l-8 8a1.5 1.5 0 0 1-2.1-2.1l7.3-7.3"/></svg>')
 
 
 def clock(ts: str) -> str:
@@ -138,7 +156,7 @@ class Chat:
 def item_html(item: dict) -> str:
     if item["side"] == "me":
         return (f'<div class="item me"><div class="bubble">{escape(item["text"])}'
-                f'<span class="meta">{clock(item["ts"])}</span></div></div>')
+                f'<span class="meta">{clock(item["ts"])}{CHECKS}</span></div></div>')
     photo = '<div class="photo">Product photo</div>' if item["photo"] else ""
     meta = f'edited {clock(item["edit_ts"])}' if item["edited"] else clock(item["ts"])
     return (
@@ -153,14 +171,14 @@ def initials(name: str) -> str:
 
 def page(shop: str, who: str, items: list[dict], reply_keyboard: list[list[str]] | None) -> str:
     feed = "\n".join(item_html(i) for i in items)
-    dock = keyboard_html(reply_keyboard) or '<div class="input">Message</div>'
+    dock = keyboard_html(reply_keyboard) or '<div class="input"><span>Message</span>' + CLIP + '</div>'
     return (
         '<!doctype html>\n<html lang="en"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1">'
         f"<title>{escape(shop)} - {escape(who)}</title><style>{CSS}</style></head><body>"
         '<div class="phone">'
-        f'<div class="head"><div class="avatar">{initials(shop)}</div>'
-        f'<div><div class="title">{escape(shop)}</div><div class="sub">bot &middot; {escape(who)}</div></div></div>'
+        f'<div class="head">{BACK}<span class="pill">2</span><div class="avatar">{initials(shop)}</div>'
+        f'<div class="who"><div class="title">{escape(shop)}</div><div class="sub">bot</div></div>{SEARCH}{DOTS}</div>'
         f'<div class="feed">\n{feed}\n</div><div class="dock">{dock}</div></div><script>{JS}</script></body></html>\n'
     )
 
