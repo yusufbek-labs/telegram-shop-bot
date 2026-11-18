@@ -26,10 +26,10 @@ def _help(lang: str, is_admin_user: bool) -> str:
 @router.message(Command("start", "menu"))
 async def cmd_start(message: Message, state: FSMContext, lang: str, settings: Settings) -> None:
     await state.clear()
-    await message.answer(
-        f"{t(lang, 'welcome', shop=settings.shop_name)}\n\n{t(lang, 'menu_title')}:",
-        reply_markup=kb.main_menu(lang),
-    )
+    welcome = t(lang, "welcome", shop=settings.shop_name)
+    if settings.demo_mode:
+        welcome += f"\n\n{t(lang, 'demo_note')}"
+    await message.answer(f"{welcome}\n\n{t(lang, 'menu_title')}:", reply_markup=kb.main_menu(lang))
 
 
 @router.message(Command("help"))

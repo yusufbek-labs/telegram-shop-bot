@@ -95,6 +95,10 @@ TEXTS = {
     "no_permission": "You do not have permission to do that.",
     "error_generic": "Something went wrong. Please try again in a moment.",
     "text_expected": "Please send a text message (or /cancel to stop).",
+    "demo_note": "ℹ️ This is a demo shop. Please don't enter real personal data.",
+    "demo_owner_header": "This is what the shop owner gets:",
+    "demo_limit": "Demo limit reached: at most {n} orders per day. Please try again tomorrow.",
+    "demo_buttons_inactive": "Demo: only the shop owner can use these buttons.",
     # --- admin: orders ---
     "admin_new_order": "🔔 <b>New order #{id}</b>\n\n{details}",
     "admin_order_card": (

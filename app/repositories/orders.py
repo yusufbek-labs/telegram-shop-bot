@@ -28,6 +28,16 @@ class OrderRepo:
             stmt = stmt.where(Order.user_id == user_id)
         return list(await self.session.scalars(stmt))
 
+    async def count_since(self, user_id: int, since: datetime) -> int:
+        stmt = select(func.count(Order.id)).where(Order.user_id == user_id, Order.created_at >= since)
+        return int(await self.session.scalar(stmt))
+
+    async def older_than(self, cutoff: datetime) -> list[Order]:
+        return list(await self.session.scalars(select(Order).where(Order.created_at < cutoff)))
+
+    async def delete(self, order: Order) -> None:
+        await self.session.delete(order)
+
     async def totals_since(self, since: datetime) -> tuple[int, int]:
         """(order count, revenue in cents) since a naive-UTC moment; cancelled orders excluded."""
         stmt = select(func.count(Order.id), func.coalesce(func.sum(Order.total_cents), 0)).where(

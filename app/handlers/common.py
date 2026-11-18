@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings
 from app.db.models import Order, Product
-from app.formatting import order_card, product_card, status_label
+from app.formatting import order_card, product_card
 from app.i18n import t
 from app.keyboards import admin as admin_kb
 from app.keyboards import customer as customer_kb
@@ -78,33 +78,29 @@ async def send_receipt(bot: Bot, chat_id: int, order: Order, caption: str,
                                 reply_to_message_id=reply_to)
 
 
+async def send_order_card(bot: Bot, chat_id: int, lang: str, settings: Settings, order: Order,
+                          header: str = "") -> None:
+    """The new-order message the shop owner gets: summary with status buttons, receipt attached if any."""
+    text = t(lang, "admin_new_order", id=order.id,
+             details=order_card(lang, order, settings.currency_symbol).split("\n", 1)[1])
+    if header:
+        text = f"{header}\n\n{text}"
+    markup = admin_kb.order_actions(lang, order)
+    try:
+        if not order.receipt_file_id:
+            await bot.send_message(chat_id, text, reply_markup=markup)
+        elif len(text) <= CAPTION_LIMIT:
+            await send_receipt(bot, chat_id, order, text, markup)
+        else:  # too long for a caption: summary with buttons first, then the receipt under it
+            sent = await bot.send_message(chat_id, text, reply_markup=markup)
+            await send_receipt(bot, chat_id, order, t(lang, "receipt_caption", id=order.id),
+                               reply_to=sent.message_id)
+    except TelegramAPIError as exc:  # an admin who never opened the bot cannot be messaged
+        log.warning("cannot send the order card to %s: %s", chat_id, exc)
+
+
 async def notify_admins_new_order(bot: Bot, session: AsyncSession, settings: Settings, order) -> None:
     users = UserRepo(session)
     for admin_id in settings.admin_ids:
         admin = await users.get(admin_id)
-        lang = admin.language if admin else "en"
-        text = t(lang, "admin_new_order", id=order.id,
-                 details=order_card(lang, order, settings.currency_symbol).split("\n", 1)[1])
-        markup = admin_kb.order_actions(lang, order)
-        try:
-            if not order.receipt_file_id:
-                await bot.send_message(admin_id, text, reply_markup=markup)
-            elif len(text) <= CAPTION_LIMIT:
-                await send_receipt(bot, admin_id, order, text, markup)
-            else:  # too long for a caption: summary with buttons first, then the receipt under it
-                sent = await bot.send_message(admin_id, text, reply_markup=markup)
-                await send_receipt(bot, admin_id, order, t(lang, "receipt_caption", id=order.id),
-                                   reply_to=sent.message_id)
-        except TelegramAPIError as exc:  # an admin who never opened the bot cannot be messaged
-            log.warning("cannot notify admin %s: %s", admin_id, exc)
-
-
-async def notify_customer_status(bot: Bot, session: AsyncSession, order: Order) -> None:
-    customer = await UserRepo(session).get(order.user_id)
-    lang = customer.language if customer else "en"
-    try:
-        await bot.send_message(
-            order.user_id, t(lang, "order_status_update", id=order.id, status=status_label(lang, order.status))
-        )
-    except TelegramAPIError as exc:
-        log.warning("could not notify customer %s: %s", order.user_id, exc)
+        await send_order_card(bot, admin_id, admin.language if admin else "en", settings, order)

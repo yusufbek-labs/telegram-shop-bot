@@ -29,6 +29,11 @@ class Settings(BaseSettings):
     google_service_account_file: str = ""
     sheets_sync_seconds: int = Field(default=60, ge=10)
     sheets_menu_sync: bool = True
+    # Public demo: visitors can place test orders and see what the shop owner would receive.
+    demo_mode: bool = False
+    demo_max_orders_per_day: int = Field(default=5, ge=1)
+    # Seconds until a visitor's new order moves to the next status by itself; 0 turns it off.
+    demo_status_seconds: int = Field(default=60, ge=0)
 
     @field_validator("admin_ids", mode="before")
     @classmethod

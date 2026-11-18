@@ -13,9 +13,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.callbacks import OrderOpen, OrderReceipt, OrdersFilter, OrderStatusCb
 from app.config import Settings
 from app.formatting import order_card, status_label
-from app.handlers.common import IsAdmin, notify_customer_status, send_receipt, show
+from app.handlers.common import IsAdmin, send_receipt, show
 from app.i18n import t
 from app.keyboards import admin as akb
+from app.notifications import notify_customer_status
 from app.repositories import OrderRepo
 from app.services.orders import STATUSES, InvalidTransition, OrderNotFound, OrderService
 from app.services.permissions import PermissionDenied
@@ -102,7 +103,7 @@ async def change_status(cb: CallbackQuery, callback_data: OrderStatusCb, lang: s
         )
     except PermissionDenied:
         log.warning("user %s tried to change order status without permission", cb.from_user.id)
-        await cb.answer(t(lang, "no_permission"), show_alert=True)
+        await cb.answer(t(lang, "demo_buttons_inactive" if settings.demo_mode else "no_permission"), show_alert=True)
         return
     except OrderNotFound:
         await cb.answer(t(lang, "order_not_found"), show_alert=True)

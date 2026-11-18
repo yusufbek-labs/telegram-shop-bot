@@ -8,12 +8,13 @@ from typing import TYPE_CHECKING
 from aiogram import Bot, F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Document, Message, ReplyKeyboardRemove
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app import demo
 from app.callbacks import CartAct, Confirm, Pay
 from app.config import Settings
 from app.formatting import lines_text, payment_label, receipt_line
-from app.handlers.common import notify_admins_new_order, show
+from app.handlers.common import notify_admins_new_order, send_order_card, show
 from app.i18n import t
 from app.keyboards import customer as kb
 from app.services.cart import CartService, CartView
@@ -32,7 +33,11 @@ TEXT = F.text & ~F.text.startswith("/")
 
 
 @router.callback_query(CartAct.filter(F.action == "checkout"))
-async def start_checkout(cb: CallbackQuery, state: FSMContext, lang: str, session: AsyncSession) -> None:
+async def start_checkout(cb: CallbackQuery, state: FSMContext, lang: str, session: AsyncSession,
+                         settings: Settings) -> None:
+    if await demo.limit_reached(session, settings, cb.from_user.id):
+        await cb.answer(t(lang, "demo_limit", n=settings.demo_max_orders_per_day), show_alert=True)
+        return
     view = await CartService(session).view(cb.from_user.id)
     if view.is_empty:
         await cb.answer(t(lang, "cart_empty"), show_alert=True)
@@ -166,10 +171,14 @@ async def wrong_receipt(message: Message, lang: str) -> None:
 @router.callback_query(Checkout.confirm, Confirm.filter(F.ctx == "checkout"))
 async def confirm_order(cb: CallbackQuery, callback_data: Confirm, state: FSMContext, lang: str,
                         session: AsyncSession, settings: Settings, bot: Bot,
-                        sheets: SheetsSync | None = None) -> None:
+                        sessionmaker: async_sessionmaker[AsyncSession], sheets: SheetsSync | None = None) -> None:
     if not callback_data.ok:
         await state.clear()
         await show(cb, t(lang, "checkout_cancelled"), kb.main_menu(lang))
+        return
+    if await demo.limit_reached(session, settings, cb.from_user.id):
+        await state.clear()
+        await show(cb, t(lang, "demo_limit", n=settings.demo_max_orders_per_day), kb.back_to_menu(lang))
         return
     data = await state.get_data()
     try:
@@ -193,3 +202,7 @@ async def confirm_order(cb: CallbackQuery, callback_data: Confirm, state: FSMCon
     if sheets is not None:
         sheets.order_created(order)
     await notify_admins_new_order(bot, session, settings, order)
+    if settings.demo_mode:
+        if cb.from_user.id not in settings.admin_ids:
+            await send_order_card(bot, cb.from_user.id, lang, settings, order, header=t(lang, "demo_owner_header"))
+        demo.schedule_status_advance(bot, sessionmaker, settings, order.id, order.status, sheets)

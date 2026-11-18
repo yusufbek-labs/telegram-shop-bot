@@ -1,12 +1,14 @@
-"""Fill the database with a small fictional catalog.  Usage: python -m scripts.seed [--force]
+"""Fill the database with a small fictional catalog.  Usage: python -m scripts.seed [--force] [--demo]
 
 Idempotent: does nothing when products already exist, unless --force is given
 (which wipes products and categories first; orders and users are kept).
+--demo (or DEMO_MODE=true) gives every product a public placeholder photo.
 """
 from __future__ import annotations
 
 import asyncio
 import sys
+from urllib.parse import quote_plus
 
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -38,8 +40,15 @@ CATALOG = [
 ]
 
 
-async def seed(sessionmaker: async_sessionmaker[AsyncSession], force: bool = False) -> int:
-    """Insert the demo catalog. Returns the number of products created (0 if skipped)."""
+def placeholder_photo(name: str) -> str:
+    return f"https://placehold.co/600x400/png?text={quote_plus(name)}"
+
+
+async def seed(sessionmaker: async_sessionmaker[AsyncSession], force: bool = False, demo: bool = False) -> int:
+    """Insert the demo catalog. Returns the number of products created (0 if skipped).
+
+    demo=True gives every product a public placeholder photo, for the public demo bot.
+    """
     async with sessionmaker() as session:
         repo = CatalogRepo(session)
         if await repo.count_products() and not force:
@@ -52,6 +61,8 @@ async def seed(sessionmaker: async_sessionmaker[AsyncSession], force: bool = Fal
         for sort, (name_en, name_ru, products) in enumerate(CATALOG):
             cat = await repo.add_category(name_en, name_ru, sort)
             for name, description, price, image in products:
+                if image is None and demo:
+                    image = placeholder_photo(name)
                 await repo.add_product(
                     category_id=cat.id, name=name, description=description, price_cents=price, image_url=image
                 )
@@ -64,7 +75,8 @@ async def _main() -> None:
     settings = get_settings()
     engine, sessionmaker = create_engine_and_sessionmaker(settings.db_url)
     await init_db(engine)
-    created = await seed(sessionmaker, force="--force" in sys.argv)
+    demo = "--demo" in sys.argv or settings.demo_mode
+    created = await seed(sessionmaker, force="--force" in sys.argv, demo=demo)
     await engine.dispose()
     print(f"Seeded {created} products." if created else "Catalog already has products; nothing to do (use --force to reset).")
 

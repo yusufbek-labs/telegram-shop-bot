@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.config import Settings
 from app.db.models import Order
-from app.handlers.common import notify_customer_status
+from app.notifications import notify_customer_status
 from app.repositories import OrderRepo
 from app.services.orders import STATUSES, InvalidTransition, OrderService
 from app.sheets.backend import (
