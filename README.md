@@ -6,34 +6,35 @@ A ready-to-run Telegram shop: customers browse a catalog, fill a cart and check 
 
 ![Test results](docs/test-results.png)
 
-*Real output of `python -m pytest -q` (198 tests, no network, no bot token needed). Regenerate with `python -m scripts.make_test_image`.*
+*Real output of `python -m pytest -q` (287 tests, no network, no bot token needed). Regenerate with `python -m scripts.make_test_image`.*
 
 ---
 
 ## What it does (for the shop owner)
 
-**Your customers** open the bot and tap through a menu: pick a category, see product cards with price and description (and a photo, if you add an image link), add items to a cart, change quantities, and check out by entering name, phone and delivery address, then choosing cash or card on delivery. They get an order confirmation, and a message every time you change the order status.
+**Your customers** open the bot and tap through a menu: pick a category or search by product or category name (also in Russian), see product cards with price and description (and a photo, if you add one), add items to a cart, change quantities, and check out by entering name, phone and delivery address, then choosing cash on delivery, card on delivery or a bank transfer. For a bank transfer the bot shows your bank details and the amount, and the customer sends a photo or PDF of the payment receipt. They get an order confirmation, and a message every time you change the order status.
 
-**You (the admin)** get every new order in your own Telegram chat with buttons to move it from New to Confirmed, Shipped, Delivered or Cancelled. The bot only offers steps that make sense (a delivered order cannot be cancelled by mistake). You can also list orders by status, switch products on or off, add and edit products by answering a few questions, see today's and the last 7 days' orders and revenue, and send an announcement to everyone who started the bot, with a preview and confirmation first.
+**You (the admin)** get every new order in your own Telegram chat, with the customer's receipt attached when they paid by transfer, and buttons to move it from New to Confirmed, Shipped, Delivered or Cancelled. The bot only offers steps that make sense (a delivered order cannot be cancelled by mistake). You can also list orders by status, switch products on or off, add, edit and delete products (the photo can be uploaded right in the chat), add, rename and delete categories, see today's and the last 7 days' orders and revenue, and send an announcement to everyone who started the bot, with a preview and confirmation first.
 
 ### Feature list
 
 | Area | Included |
 |---|---|
 | Customer menu | `/start` main menu with inline buttons, help, "My orders" |
-| Catalog | Categories, product cards (name, price, description, optional image URL) |
+| Catalog | Categories, product cards (name, price, description, one optional image: an uploaded photo or a URL) |
+| Search | `/search` or the Search button: finds in-stock products by name or category name, any letter case, Cyrillic included; says so when nothing matches |
 | Cart | Add, remove, change quantity, running total, clear |
-| Checkout | Step-by-step form (name, phone, address, payment), summary and confirmation, cash or card on delivery |
-| Notifications | New orders pushed to all admins; customers notified on every status change |
+| Checkout | Step-by-step form (name, phone, address, payment), summary and confirmation; cash or card on delivery, or bank transfer with a receipt upload (photo or PDF), see below |
+| Notifications | New orders pushed to all admins (with the receipt as the photo or document, the order summary as its caption and the status buttons below it); customers notified on every status change |
 | Order workflow | `new -> confirmed -> shipped -> delivered`, cancel allowed until delivered; invalid jumps are refused |
-| Admin tools | `/orders` (filter by status), `/products` (on/off toggle), `/add_product`, `/edit_product`, `/stats`, `/broadcast` |
+| Admin tools | `/orders` (filter by status, open a receipt), `/products` (on/off toggle, delete), `/add_product`, `/edit_product`, `/categories` (add, rename, delete empty ones), `/stats`, `/broadcast` |
 | Broadcast | Preview and confirm step, throttled to stay under Telegram's limits, honours flood-control replies, remembers users who blocked the bot |
 | Languages | English and Russian, picked from the user's Telegram language, `/language` to switch |
 | Robustness | Unknown text, commands, stale buttons and invalid form input get friendly replies; errors are logged, never crash polling |
-| Storage | SQLite (single file), money stored in integer cents |
+| Storage | SQLite (single file), money stored in integer cents; columns added in newer versions are added to an existing database on startup |
 
 ### Not included (by design, see [How to extend](#how-to-extend))
-Online card payments, stock counts, discounts, multiple shops, a web dashboard. FSM state is kept in memory, so a half-finished checkout is lost if the bot restarts (the cart and orders are safe in the database).
+Online card payments, stock counts, discounts, multiple shops, a web dashboard. Bank receipts are only collected and forwarded: the bot cannot tell whether a receipt is genuine or the amount matches, the admin checks it and confirms the order. A receipt cannot be added to an order after it is placed. FSM state is kept in memory, so a half-finished checkout is lost if the bot restarts (the cart and orders are safe in the database).
 
 ---
 
@@ -65,16 +66,42 @@ Admins are the Telegram ids in `ADMIN_IDS` (comma-separated). Everyone else is a
 |---|---|
 | New-order message | Arrives automatically. Tap a status button to move the order forward; the customer is notified. Buttons shown are only the allowed next steps. |
 | `/orders` | Pick a status filter (or `/orders shipped`, `/orders all`), tap an order to open it and change its status. Shows the latest 10 per filter. |
-| `/products` | Lists all products. Tap a product name to show or hide it in the shop; tap Edit to change it. |
-| `/add_product` | Choose a category, then send name, price (`12.50`), description and an image URL (or `-` to skip), then confirm. |
-| `/edit_product` | Pick a product and a field (name, price, description, image) and send the new value. Existing orders keep the old price. |
+| Receipt button | On an order opened from `/orders` (or under a new-order message) that has a receipt, tap Receipt to get the photo or PDF again. |
+| `/products` | Lists all products. Tap a product name to show or hide it in the shop (that is the availability switch); tap Edit to change it; tap the bin to delete it (asks first; past orders keep their lines). |
+| `/add_product` | Choose a category, then send name, price (`12.50`), description and a photo or an image URL (or `-` to skip), then confirm. |
+| `/edit_product` | Pick a product and a field (name, price, description, image, category) and send the new value. Existing orders keep the old price. |
+| `/categories` | Lists categories. Tap one to rename it (send the English and the Russian name, `-` keeps the current one), the bin deletes it, Add category creates one. A category that still has products cannot be deleted: move or delete the products first. |
 | `/stats` | Orders and revenue for today and for the last 7 days (cancelled orders excluded). "Today" follows `TIMEZONE`. |
 | `/broadcast` | Send a message, review the preview, confirm. You get a report: sent, blocked, failed. |
 | `/cancel` | Abort any multi-step form. |
 
 Order statuses: `new` can become `confirmed` or `cancelled`; `confirmed` can become `shipped` or `cancelled`; `shipped` can become `delivered` or `cancelled`; `delivered` and `cancelled` are final.
 
-Settings (in `.env`): `SHOP_NAME`, `CURRENCY_SYMBOL`, `TIMEZONE`, `DB_PATH`, `LOG_LEVEL`, `BROADCAST_RATE` (messages per second, capped at 30). Product names and descriptions are entered in one language by the admin; category names and all bot texts are bilingual.
+### Bank transfer and receipts
+
+If `PAYMENT_DETAILS` is set, the payment step offers a third option, Bank transfer. The customer then sees your bank details and the amount to pay, and must send a photo or a PDF of the receipt (an image sent as a file is accepted too; other file types, text and stickers are answered with a reminder). The receipt's Telegram `file_id` and kind are stored on the order, and the new-order message to the admins is the receipt itself with the order summary as the caption and the status buttons under it. If the summary is too long for a Telegram caption (1024 characters) it is sent as a normal message with the buttons and the receipt follows right under it.
+
+The step is mandatory for bank transfer orders: an order without proof of payment would make the option pointless, and the service layer refuses to create one. Customers who do not want to upload anything choose cash or card on delivery instead, or `/cancel` (the cart is kept). If `PAYMENT_DETAILS` is empty the option is hidden and checkout works as before.
+
+### Settings
+
+Set in `.env` (copy `.env.example`):
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `BOT_TOKEN` | (required) | Token from @BotFather |
+| `ADMIN_IDS` | (empty) | Comma-separated Telegram ids of the admins |
+| `DB_PATH` | `data/shop.db` | SQLite file |
+| `SHOP_NAME` | `Maple & Pine Goods` | Name in the welcome message |
+| `CURRENCY_SYMBOL` | `$` | Shown next to prices |
+| `TIMEZONE` | `UTC` | IANA name, decides what "today" means in `/stats` |
+| `PAYMENT_DETAILS` | (empty) | Bank details shown for bank transfer, `\n` for a line break. Empty hides the option |
+| `LOG_LEVEL` | `INFO` | Python logging level |
+| `BROADCAST_RATE` | `20` | Broadcast messages per second, capped at 30 |
+
+Product names and descriptions are entered in one language by the admin; category names (both languages) and all bot texts are bilingual.
+
+Upgrading an existing `shop.db`: on startup the bot adds columns that newer versions need (the receipt columns on `orders`) and leaves all data alone. This only covers new optional columns; for anything bigger use a migration tool such as Alembic.
 
 To replace the demo catalog: edit `scripts/seed.py` and run `python -m scripts.seed --force` (this wipes products and categories, keeps orders and users), or delete `data/shop.db` and start again.
 
@@ -96,7 +123,13 @@ To replace the demo catalog: edit `scripts/seed.py` and run `python -m scripts.s
 
 ![Order confirmation and status updates (customer)](docs/screenshots/07-status-update.png)
 
-*Conversation rendered from the bot's real responses, captured by running the actual handlers with a recording Telegram session (`python -m scripts.capture_demo && python -m scripts.render_demo --screenshots`). Styled after a dark chat theme; not a screenshot of the Telegram app. Each image is the chat state at one moment, with message edits applied in place; product photos are placeholders. A run against the live Telegram service has not been done yet.*
+![Search by product or category name](docs/screenshots/08-search.png)
+
+![Bank transfer: payment details, the customer's receipt photo and the order summary](docs/screenshots/09-receipt.png)
+
+![New-order notification with the receipt attached (shop owner)](docs/screenshots/10-admin-receipt.png)
+
+*Conversation rendered from the bot's real responses, captured by running the actual handlers with a recording Telegram session (`python -m scripts.capture_demo && python -m scripts.render_demo --screenshots`). Styled after a dark chat theme; not a screenshot of the Telegram app. Each image is the chat state at one moment, with message edits applied in place; product and receipt photos are placeholders. A run against the live Telegram service has not been done yet.*
 
 ---
 
@@ -113,12 +146,13 @@ app/
   config.py              Settings from .env
   middlewares.py         one DB session per update, user upsert, language injection
   handlers/              Telegram layer only: parse input, call services, render
-    start, catalog, cart, checkout, admin_orders, admin_products, admin_misc, fallback
+    start, catalog, search, cart, checkout, admin_orders, admin_products,
+    admin_categories, admin_misc, fallback
   keyboards/             inline keyboard builders (customer, admin)
   callbacks.py, states.py  typed callback data, FSM state groups
   services/              business logic, no Telegram objects except broadcast
-    cart, orders (checkout + status state machine), permissions,
-    broadcast (rate limiter), stats, money, validation
+    cart, catalog (search, guarded deletes), orders (checkout + status state machine),
+    permissions, broadcast (rate limiter), stats, money, validation
   repositories/          all SQL (users, catalog, carts, orders)
   db/                    models, engine/session
   i18n/                  en.py, ru.py, t() and language detection
@@ -126,7 +160,7 @@ app/
 scripts/seed.py          demo catalog (idempotent)
 scripts/make_test_image.py  renders docs/test-results.png from real pytest output
 run.py                   one-command bootstrap
-tests/                   198 tests
+tests/                   287 tests
 ```
 
 Design notes:
@@ -134,7 +168,9 @@ Design notes:
 - **Money** is integer cents; order lines snapshot name and price at purchase time.
 - **Transactions.** One session per update, committed after the handler returns, rolled back on error.
 - **Broadcast** uses a spacing rate limiter (default 20/s, hard cap 30/s), retries on `retry_after`, and flags users who blocked the bot so later broadcasts skip them.
-- **No migrations**: tables are created on startup. Add Alembic when the schema starts changing in production.
+- **Search** runs in Python over the in-stock products and compares `casefold()`ed text (SQLite's `lower()` does not fold Cyrillic). Fine for a small catalog; with thousands of products keep a normalized name column and filter in SQL.
+- **Receipts** are stored as Telegram `file_id` strings (the files stay on Telegram's servers), with a kind of `photo` or `document`.
+- **No migration tool**: tables are created on startup and `init_db` adds missing nullable columns to existing tables. Add Alembic when the schema starts changing in production.
 
 ### How to extend
 
@@ -150,11 +186,11 @@ pip install -r requirements-dev.txt        # or use the .venv created by run.py
 python -m pytest -q
 ```
 
-198 tests, about 3 seconds, no network and no real token:
+287 tests, about 8 seconds, no network and no real token:
 
 - **Services**: cart math and quantity limits, order totals and price snapshots, the full status transition matrix, permission checks, broadcast rate limiter (fake clock), flood-control and blocked-user handling, stats windows and timezone, validation, money, config parsing, seed.
 - **i18n**: both languages have identical keys and placeholders, every status and payment method has a label, language detection.
-- **Handlers**: a real aiogram `Dispatcher` is fed raw updates while the Bot uses a recording fake session, so the tests exercise real routing, filters, middleware, FSM and SQLite. Covered: language detection and switching, the complete purchase flow, admin notification, status buttons (refused forged transition, refused non-admin, customer notified), cart controls, checkout validation, unknown input, product toggle, add/edit product FSMs, `/stats`, broadcast confirm and cancel.
+- **Handlers**: a real aiogram `Dispatcher` is fed raw updates while the Bot uses a recording fake session, so the tests exercise real routing, filters, middleware, FSM and SQLite. Covered: language detection and switching, the complete purchase flow, admin notification, status buttons (refused forged transition, refused non-admin, customer notified), cart controls, checkout validation, unknown input, product toggle and delete, add/edit product FSMs (including photo upload and category change), category add / rename / guarded delete, search (English and Cyrillic, case-insensitive, nothing found, result cap), bank transfer checkout (receipt as photo, as PDF, wrong message type, wrong file type, cancel), the admin notification carrying the receipt, opening the receipt from the order card, `/stats`, broadcast confirm and cancel. The startup upgrade of an old `orders` table is tested with a database in the old layout.
 
 `python -m scripts.make_test_image` re-runs the suite and regenerates the screenshot at the top.
 
@@ -162,6 +198,7 @@ python -m pytest -q
 
 - A live run against Telegram (real token, real photos, real flood-control behaviour).
 - `docker build` / `docker compose up`.
+- Receipts and uploaded product photos with real Telegram `file_id`s: the tests check that the right `file_id` is stored and sent back, not that Telegram accepts it.
 - Photo cards load from the image URL on Telegram's side; a bad URL falls back to a text card (this fallback exists in code but is not covered by the tests).
 
 ### License
